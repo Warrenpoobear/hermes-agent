@@ -812,10 +812,16 @@ def setup_model_provider(config: dict, *, quick: bool = False):
     # changes with stale values (#4172).
     _refreshed = load_config()
     config["model"] = _refreshed.get("model", config.get("model"))
-    if "custom_providers" in _refreshed:
-        config["custom_providers"] = _refreshed["custom_providers"]
-    else:
-        config.pop("custom_providers", None)
+    for key in (
+        "custom_providers",
+        "providers",
+        "credential_pool_strategies",
+        "fallback_providers",
+    ):
+        if key in _refreshed:
+            config[key] = _refreshed[key]
+        else:
+            config.pop(key, None)
 
     # Derive the selected provider for downstream steps (vision setup).
     selected_provider = None

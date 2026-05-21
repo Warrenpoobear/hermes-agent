@@ -597,20 +597,27 @@ class GoogleChatAdapter(BasePlatformAdapter):
     def _loop_accepts_callbacks(loop: Optional[asyncio.AbstractEventLoop]) -> bool:
         return loop is not None and not bool(getattr(loop, "is_closed", lambda: False)())
 
-    def _submit_on_loop(self, coro: Any) -> None:
+    def _submit_on_loop(self, coro: Any) -> bool:
         """Schedule a coroutine on the adapter loop from a Pub/Sub callback thread."""
         loop = self._loop
         if not self._loop_accepts_callbacks(loop):
             # Loop already closed (shutdown race). Safe to drop; Pub/Sub will
             # redeliver on next reconnect.
             logger.warning("[GoogleChat] Loop not accepting callbacks; dropping event")
-            return
+            close = getattr(coro, "close", None)
+            if close:
+                close()
+            return False
         try:
             future = asyncio.run_coroutine_threadsafe(coro, loop)
         except RuntimeError:
             logger.warning("[GoogleChat] Loop closed between check and submit")
-            return
+            close = getattr(coro, "close", None)
+            if close:
+                close()
+            return False
         future.add_done_callback(self._log_background_failure)
+        return True
 
     # ------------------------------------------------------------------
     # Bot identity resolution
@@ -1152,8 +1159,13 @@ class GoogleChatAdapter(BasePlatformAdapter):
             if "space" not in enriched_env and space:
                 enriched_env["space"] = space
 
-            self._submit_on_loop(self._dispatch_message(msg_with_space, enriched_env))
-            message.ack()
+            submitted = self._submit_on_loop(
+                self._dispatch_message(msg_with_space, enriched_env)
+            )
+            if submitted:
+                message.ack()
+            else:
+                message.nack()
         except Exception:
             logger.exception("[GoogleChat] Error in _on_pubsub_message")
             try:

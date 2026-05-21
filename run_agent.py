@@ -5016,26 +5016,45 @@ class AIAgent:
         Safe to call multiple times (idempotent).  Each cleanup step is
         independently guarded so a failure in one does not prevent the rest.
         """
-        task_id = getattr(self, "session_id", None) or ""
+        primary_task_id = getattr(self, "session_id", None) or ""
+        current_task_id = getattr(self, "_current_task_id", None) or ""
+        cleanup_task_ids = []
+        for candidate in (current_task_id, primary_task_id):
+            if candidate and candidate not in cleanup_task_ids:
+                cleanup_task_ids.append(candidate)
+        try:
+            from tools.terminal_tool import _resolve_container_task_id
+
+            for candidate in list(cleanup_task_ids):
+                resolved = _resolve_container_task_id(candidate)
+                if resolved and resolved not in cleanup_task_ids:
+                    cleanup_task_ids.append(resolved)
+        except Exception:
+            pass
+        if not cleanup_task_ids:
+            cleanup_task_ids.append("")
 
         # 1. Kill background processes for this task
         try:
             from tools.process_registry import process_registry
-            process_registry.kill_all(task_id=task_id)
+            for task_id in cleanup_task_ids:
+                process_registry.kill_all(task_id=task_id)
         except Exception:
             pass
 
         # 2. Clean terminal sandbox environments
-        try:
-            cleanup_vm(task_id)
-        except Exception:
-            pass
+        for task_id in cleanup_task_ids:
+            try:
+                cleanup_vm(task_id)
+            except Exception:
+                pass
 
         # 3. Clean browser daemon sessions
-        try:
-            cleanup_browser(task_id)
-        except Exception:
-            pass
+        for task_id in cleanup_task_ids:
+            try:
+                cleanup_browser(task_id)
+            except Exception:
+                pass
 
         # 4. Close active child agents
         try:
@@ -14215,8 +14234,9 @@ class AIAgent:
                 )
             final_response = self._handle_max_iterations(messages, api_call_count)
         
-        # Determine if conversation completed successfully
-        completed = final_response is not None and api_call_count < self.max_iterations
+        # A toolless max-iteration summary is a successful terminal response
+        # even though the tool-calling loop itself exhausted its budget.
+        completed = final_response is not None and not interrupted
 
         # Save trajectory if enabled.  ``user_message`` may be a multimodal
         # list of parts; the trajectory format wants a plain string.
