@@ -548,7 +548,12 @@ class TestOnPubsubMessage:
     def test_text_message_submits_to_loop(self, adapter):
         env = _make_chat_envelope(text="hola")
         msg = _make_pubsub_message(env)
-        with patch.object(adapter, "_submit_on_loop", return_value=True) as submit:
+
+        def fake_submit(coro):
+            coro.close()
+            return True
+
+        with patch.object(adapter, "_submit_on_loop", side_effect=fake_submit) as submit:
             adapter._on_pubsub_message(msg)
             submit.assert_called_once()
         msg.ack.assert_called_once()
@@ -557,7 +562,12 @@ class TestOnPubsubMessage:
     def test_text_message_nacks_when_loop_rejects_handoff(self, adapter):
         env = _make_chat_envelope(text="hola")
         msg = _make_pubsub_message(env)
-        with patch.object(adapter, "_submit_on_loop", return_value=False) as submit:
+
+        def fake_submit(coro):
+            coro.close()
+            return False
+
+        with patch.object(adapter, "_submit_on_loop", side_effect=fake_submit) as submit:
             adapter._on_pubsub_message(msg)
             submit.assert_called_once()
         msg.ack.assert_not_called()

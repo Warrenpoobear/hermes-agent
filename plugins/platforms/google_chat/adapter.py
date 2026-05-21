@@ -1159,12 +1159,14 @@ class GoogleChatAdapter(BasePlatformAdapter):
             if "space" not in enriched_env and space:
                 enriched_env["space"] = space
 
-            submitted = self._submit_on_loop(
-                self._dispatch_message(msg_with_space, enriched_env)
-            )
+            dispatch_coro = self._dispatch_message(msg_with_space, enriched_env)
+            submitted = self._submit_on_loop(dispatch_coro)
             if submitted:
                 message.ack()
             else:
+                close = getattr(dispatch_coro, "close", None)
+                if close:
+                    close()
                 message.nack()
         except Exception:
             logger.exception("[GoogleChat] Error in _on_pubsub_message")
