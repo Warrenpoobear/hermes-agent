@@ -749,6 +749,14 @@ _CONTROL_INTERRUPT_MESSAGES = frozenset(
 )
 
 
+def _gateway_draining_message(count: int) -> str:
+    """Return the user-facing drain message with an English fallback."""
+    message = t("gateway.draining", count=count)
+    if message == "gateway.draining":
+        return f"⏳ Draining {count} active agent(s) before restart..."
+    return message
+
+
 def _is_control_interrupt_message(message: Optional[str]) -> bool:
     """Return True when an interrupt message is internal control flow."""
     if not message:
@@ -7762,7 +7770,7 @@ class GatewayRunner:
         if self._restart_requested or self._draining:
             count = self._running_agent_count()
             if count:
-                return t("gateway.draining", count=count)
+                return _gateway_draining_message(count)
             return EphemeralReply("⏳ Gateway restart already in progress...")
 
         # Save the requester's routing info so the new gateway process can
@@ -7814,7 +7822,7 @@ class GatewayRunner:
         else:
             self.request_restart(detached=True, via_service=False)
         if active_agents:
-            return t("gateway.draining", count=active_agents)
+            return _gateway_draining_message(active_agents)
         return EphemeralReply("♻ Restarting gateway. If you aren't notified within 60 seconds, restart from the console with `hermes gateway restart`.")
 
     def _is_stale_restart_redelivery(self, event: MessageEvent) -> bool:
