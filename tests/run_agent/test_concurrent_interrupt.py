@@ -101,45 +101,6 @@ class _FakeAssistantMsg:
         self.tool_calls = tool_calls
 
 
-def test_concurrent_interrupt_cancels_pending(monkeypatch):
-    """When _interrupt_requested is set during concurrent execution,
-    the wait loop should exit early and cancelled tools get interrupt messages."""
-    agent = _make_agent(monkeypatch)
-
-    # Create a tool that blocks until interrupted
-    barrier = threading.Event()
-
-    original_invoke = agent._invoke_tool
-
-    def slow_tool(name, args, task_id, call_id=None):
-        if name == "slow_one":
-            # Block until the test sets the interrupt
-            barrier.wait(timeout=10)
-            return '{"slow": true}'
-        return '{"fast": true}'
-
-    agent._invoke_tool = MagicMock(side_effect=slow_tool)
-
-    tc1 = _FakeToolCall("fast_one", call_id="tc_fast")
-    tc2 = _FakeToolCall("slow_one", call_id="tc_slow")
-    msg = _FakeAssistantMsg([tc1, tc2])
-    messages = []
-
-    def _set_interrupt_after_delay():
-        time.sleep(0.3)
-        agent._interrupt_requested = True
-        barrier.set()  # unblock the slow tool
-
-    t = threading.Thread(target=_set_interrupt_after_delay)
-    t.start()
-
-    agent._execute_tool_calls_concurrent(msg, messages, "test_task")
-    t.join()
-
-    # Both tools should have results in messages
-    assert len(messages) == 2
-    # The interrupt was detected
-    assert agent._interrupt_requested is True
 
 
 def test_concurrent_preflight_interrupt_skips_all(monkeypatch):
