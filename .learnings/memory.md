@@ -65,6 +65,14 @@
 
 ---
 
+## Agent document authority (Hermes MCP / FleetView)
+
+- **Runtime truth**: `biotech-screener/agents/<name>/` — SOUL.md, HEARTBEAT.md, IDENTITY.md (set via `HERMES_AGENTS_DIR` in `.cursor/mcp.json`).
+- **Index only**: `hermes-agent/agents/AGENT_REGISTRY.json` — discovery/metadata; must not override runtime identity documents.
+- **Transport**: `hermes_skills_mcp.py` resolves agents dir: `HERMES_AGENTS_DIR` → repo `agents/` → `~/.hermes/hermes-agent/agents/`.
+
+---
+
 ## Forward Monitor
 
 - Accumulating since 2026-04-03. ~35+ trading days as of 2026-05-22.
