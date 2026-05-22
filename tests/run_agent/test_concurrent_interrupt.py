@@ -76,12 +76,20 @@ def _make_agent(monkeypatch):
     stub = _Stub()
     # Bind the real methods under test
     stub._execute_tool_calls_concurrent = _ra.AIAgent._execute_tool_calls_concurrent.__get__(stub)
+    stub._subdirectory_hints.check_tool_call.return_value = ""
     stub.interrupt = _ra.AIAgent.interrupt.__get__(stub)
     stub.clear_interrupt = _ra.AIAgent.clear_interrupt.__get__(stub)
     # /steer injection (added in PR #12116) fires after every concurrent
     # tool batch. Stub it as a no-op — this test exercises interrupt
     # fanout, not steer injection.
     stub._apply_pending_steer_to_tool_results = lambda *a, **kw: None
+    stub._append_guardrail_observation = lambda _name, _args, result, *, failed=False: result
+
+    class _Guardrails:
+        def before_call(self, *_args, **_kwargs):
+            return MagicMock(allows_execution=True)
+
+    stub._tool_guardrails = _Guardrails()
     stub._invoke_tool = MagicMock(side_effect=lambda *a, **kw: '{"ok": true}')
     return stub
 
@@ -264,6 +272,7 @@ def test_clear_interrupt_clears_worker_tids(monkeypatch):
     )
 
 
+
 def test_concurrent_tool_exception_result_is_json(monkeypatch):
     """Tool exceptions should use the same JSON error shape as registry dispatch."""
     agent = _make_agent(monkeypatch)
@@ -279,4 +288,3 @@ def test_concurrent_tool_exception_result_is_json(monkeypatch):
     assert "error" in payload
     assert "broken_tool" in payload["error"]
     assert "boom" in payload["error"]
-

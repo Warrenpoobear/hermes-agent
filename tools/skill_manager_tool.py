@@ -2,10 +2,10 @@
 """
 Skill Manager Tool -- Agent-Managed Skill Creation & Editing
 
-Allows the agent to create, update, and delete skills, turning successful
-approaches into reusable procedural knowledge. New skills are created in
-~/.hermes/skills/. Existing skills (bundled, hub-installed, or user-created)
-can be modified or deleted wherever they live.
+Allows the agent to create, update, and delete user-created skills, turning
+successful approaches into reusable procedural knowledge. New skills are
+created in ~/.hermes/skills/. Bundled and hub-installed skills are protected
+from mutation; copy them into a new skill before customizing.
 
 Skills are the agent's procedural memory: they capture *how to do a specific
 type of task* based on proven experience. General memory (MEMORY.md, USER.md) is
@@ -159,6 +159,26 @@ def _pinned_guard(name: str) -> Optional[str]:
     except Exception:
         logger.debug("pinned-guard lookup failed for %s", name, exc_info=True)
     return None
+
+def _protected_upstream_skill_guard(name: str) -> Optional[str]:
+    """Return a refusal message for bundled or hub-installed skills."""
+    try:
+        from tools import skill_usage
+
+        upstream = (
+            skill_usage._read_bundled_manifest_names()
+            | skill_usage._read_hub_installed_names()
+        )
+        if name in upstream:
+            return (
+                f"Skill '{name}' is bundled or hub-installed and cannot be "
+                "modified by skill_manage. Create a new user skill that copies "
+                "the parts you need, or update the upstream source."
+            )
+    except Exception:
+        logger.debug("upstream skill guard lookup failed for %s", name, exc_info=True)
+    return None
+
 
 
 MAX_SKILL_CONTENT_CHARS = 100_000   # ~36k tokens at 2.75 chars/token
@@ -440,6 +460,9 @@ def _edit_skill(name: str, content: str) -> Dict[str, Any]:
     existing = _find_skill(name)
     if not existing:
         return {"success": False, "error": f"Skill '{name}' not found. Use skills_list() to see available skills."}
+    protected_err = _protected_upstream_skill_guard(name)
+    if protected_err:
+        return {"success": False, "error": protected_err}
 
     skill_md = existing["path"] / "SKILL.md"
     # Back up original content for rollback
@@ -480,6 +503,9 @@ def _patch_skill(
     existing = _find_skill(name)
     if not existing:
         return {"success": False, "error": f"Skill '{name}' not found."}
+    protected_err = _protected_upstream_skill_guard(name)
+    if protected_err:
+        return {"success": False, "error": protected_err}
 
     skill_dir = existing["path"]
 
@@ -569,6 +595,9 @@ def _delete_skill(name: str, absorbed_into: Optional[str] = None) -> Dict[str, A
     existing = _find_skill(name)
     if not existing:
         return {"success": False, "error": f"Skill '{name}' not found."}
+    protected_err = _protected_upstream_skill_guard(name)
+    if protected_err:
+        return {"success": False, "error": protected_err}
 
     pinned_err = _pinned_guard(name)
     if pinned_err:
@@ -638,6 +667,9 @@ def _write_file(name: str, file_path: str, file_content: str) -> Dict[str, Any]:
     existing = _find_skill(name)
     if not existing:
         return {"success": False, "error": f"Skill '{name}' not found. Create it first with action='create'."}
+    protected_err = _protected_upstream_skill_guard(name)
+    if protected_err:
+        return {"success": False, "error": protected_err}
 
     target, err = _resolve_skill_target(existing["path"], file_path)
     if err:
@@ -672,6 +704,9 @@ def _remove_file(name: str, file_path: str) -> Dict[str, Any]:
     existing = _find_skill(name)
     if not existing:
         return {"success": False, "error": f"Skill '{name}' not found."}
+    protected_err = _protected_upstream_skill_guard(name)
+    if protected_err:
+        return {"success": False, "error": protected_err}
 
     skill_dir = existing["path"]
 

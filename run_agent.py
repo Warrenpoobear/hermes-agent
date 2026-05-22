@@ -9957,7 +9957,10 @@ class AIAgent:
                     pre_tool_block_checked=True,
                 )
             except Exception as tool_error:
-                result = f"Error executing tool '{function_name}': {tool_error}"
+                result = json.dumps(
+                    {"error": f"Error executing tool '{function_name}': {tool_error}"},
+                    ensure_ascii=False,
+                )
                 logger.error("_invoke_tool raised for %s: %s", function_name, tool_error, exc_info=True)
             duration = time.time() - start
             is_error, _ = _detect_tool_failure(function_name, result)
@@ -10440,7 +10443,10 @@ class AIAgent:
                     )
                     _spinner_result = function_result
                 except Exception as tool_error:
-                    function_result = f"Error executing tool '{function_name}': {tool_error}"
+                    function_result = json.dumps(
+                        {"error": f"Error executing tool '{function_name}': {tool_error}"},
+                        ensure_ascii=False,
+                    )
                     logger.error("handle_function_call raised for %s: %s", function_name, tool_error, exc_info=True)
                 finally:
                     tool_duration = time.time() - tool_start_time
@@ -12837,11 +12843,26 @@ class AIAgent:
                         except Exception:
                             pass
                         if _genuine_nous_rate_limit:
-                            # Skip straight to max_retries -- the
-                            # top-of-loop guard will handle fallback or
-                            # bail cleanly.
-                            retry_count = max_retries
-                            continue
+                            self._emit_status("⚠️ Nous rate limit reached — trying fallback...")
+                            if self._try_activate_fallback():
+                                retry_count = 0
+                                compression_attempts = 0
+                                primary_recovery_attempted = False
+                                continue
+                            final_response = (
+                                "Nous rate limit reached. Please retry after the "
+                                "rate-limit window resets or configure a fallback provider."
+                            )
+                            self._persist_session(messages, conversation_history)
+                            return {
+                                "final_response": final_response,
+                                "messages": messages,
+                                "completed": False,
+                                "api_calls": api_call_count,
+                                "error": final_response,
+                                "failed": True,
+                                "rate_limited": True,
+                            }
                         # Upstream capacity 429: fall through to normal
                         # retry logic.  A different model (or the same
                         # model a moment later) will typically succeed.

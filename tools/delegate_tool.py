@@ -44,6 +44,9 @@ DELEGATE_BLOCKED_TOOLS = frozenset(
         "memory",  # no writes to shared MEMORY.md
         "send_message",  # no cross-platform side effects
         "execute_code",  # children should reason step-by-step, not write scripts
+        "cronjob",  # no durable scheduled side effects from leaf workers
+        "ha_call_service",  # no delegated smart-home mutations
+        "skill_manage",  # no delegated skill writes/deletes
     ]
 )
 
@@ -673,6 +676,45 @@ def _strip_blocked_tools(toolsets: List[str]) -> List[str]:
         "code_execution",
     }
     return [t for t in toolsets if t not in blocked_toolset_names]
+
+
+def _blocked_child_toolsets_for_role(role: str) -> List[str]:
+    """Return toolsets to subtract after child toolset resolution."""
+    blocked = ["clarify", "memory", "code_execution", "messaging", "cronjob", "homeassistant"]
+    if role != "orchestrator":
+        blocked.append("delegation")
+    return blocked
+
+
+def _child_disabled_toolsets(parent_agent, role: str) -> List[str]:
+    """Combine parent disables with delegation-specific child restrictions."""
+    disabled: List[str] = []
+    for toolset_name in getattr(parent_agent, "disabled_toolsets", None) or []:
+        if toolset_name not in disabled:
+            disabled.append(toolset_name)
+    for toolset_name in _blocked_child_toolsets_for_role(role):
+        if toolset_name not in disabled:
+            disabled.append(toolset_name)
+    return disabled
+
+
+def _filter_blocked_child_tools(child, role: str) -> None:
+    """Remove blocked individual tools that arrived through composite toolsets."""
+    raw_tools = getattr(child, "tools", None)
+    if not isinstance(raw_tools, list):
+        return
+    allowed_blocked = {"delegate_task"} if role == "orchestrator" else set()
+    blocked_names = DELEGATE_BLOCKED_TOOLS - allowed_blocked
+    child.tools = [
+        tool
+        for tool in raw_tools
+        if tool.get("function", {}).get("name") not in blocked_names
+    ]
+    child.valid_tool_names = {
+        tool["function"]["name"]
+        for tool in child.tools
+        if tool.get("function", {}).get("name")
+    }
 
 
 def _build_child_progress_callback(

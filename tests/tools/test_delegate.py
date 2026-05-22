@@ -777,6 +777,7 @@ class TestBlockedTools(unittest.TestCase):
                 model=None,
                 max_iterations=50,
                 parent_agent=parent,
+                task_count=1,
             )
 
         self.assertEqual(child.valid_tool_names, {"web_search"})
@@ -801,6 +802,7 @@ class TestBlockedTools(unittest.TestCase):
                 model=None,
                 max_iterations=50,
                 parent_agent=parent,
+                task_count=1,
             )
 
         disabled = MockAgent.call_args.kwargs["disabled_toolsets"]

@@ -330,8 +330,35 @@ def _reload_runtime_env_preserving_config_authority() -> None:
         return
 
     agent_cfg = cfg.get("agent", {})
-    if isinstance(agent_cfg, dict) and "max_turns" in agent_cfg:
-        os.environ["HERMES_MAX_ITERATIONS"] = str(agent_cfg["max_turns"])
+    if isinstance(agent_cfg, dict):
+        if "max_turns" in agent_cfg:
+            os.environ["HERMES_MAX_ITERATIONS"] = str(agent_cfg["max_turns"])
+        if "gateway_timeout" in agent_cfg:
+            os.environ["HERMES_AGENT_TIMEOUT"] = str(agent_cfg["gateway_timeout"])
+        if "gateway_timeout_warning" in agent_cfg:
+            os.environ["HERMES_AGENT_TIMEOUT_WARNING"] = str(agent_cfg["gateway_timeout_warning"])
+        if "gateway_notify_interval" in agent_cfg:
+            os.environ["HERMES_AGENT_NOTIFY_INTERVAL"] = str(agent_cfg["gateway_notify_interval"])
+        if "restart_drain_timeout" in agent_cfg:
+            os.environ["HERMES_RESTART_DRAIN_TIMEOUT"] = str(agent_cfg["restart_drain_timeout"])
+        if "gateway_auto_continue_freshness" in agent_cfg:
+            os.environ["HERMES_AUTO_CONTINUE_FRESHNESS"] = str(
+                agent_cfg["gateway_auto_continue_freshness"]
+            )
+    display_cfg = cfg.get("display", {})
+    if isinstance(display_cfg, dict):
+        if "busy_input_mode" in display_cfg:
+            os.environ["HERMES_GATEWAY_BUSY_INPUT_MODE"] = str(display_cfg["busy_input_mode"])
+        if "busy_ack_enabled" in display_cfg:
+            os.environ["HERMES_GATEWAY_BUSY_ACK_ENABLED"] = str(display_cfg["busy_ack_enabled"])
+    timezone_cfg = cfg.get("timezone", "")
+    if timezone_cfg and isinstance(timezone_cfg, str):
+        os.environ["HERMES_TIMEZONE"] = timezone_cfg.strip()
+    security_cfg = cfg.get("security", {})
+    if isinstance(security_cfg, dict):
+        redact = security_cfg.get("redact_secrets")
+        if redact is not None:
+            os.environ["HERMES_REDACT_SECRETS"] = str(redact).lower()
 
 
 _DOCKER_VOLUME_SPEC_RE = re.compile(r"^(?P<host>.+):(?P<container>/[^:]+?)(?::(?P<options>[^:]+))?$")
@@ -5411,6 +5438,21 @@ class GatewayRunner:
                     f"⏳ Agent is running — `/{_cmd_def_inner.name}` can't run "
                     f"mid-turn. Wait for the current response or `/stop` first."
                 )
+
+            if _evt_cmd:
+                try:
+                    from hermes_cli.plugins import get_plugin_command_handler
+
+                    plugin_handler = get_plugin_command_handler(_evt_cmd.replace("_", "-"))
+                    if plugin_handler:
+                        user_args = event.get_command_args().strip()
+                        result = plugin_handler(user_args)
+                        if asyncio.iscoroutine(result):
+                            result = await result
+                        return str(result) if result else None
+                except Exception as e:
+                    logger.debug("Plugin command dispatch failed during active session: %s", e)
+                    return f"Plugin command '/{_evt_cmd}' failed: {e}"
 
             if event.message_type == MessageType.PHOTO:
                 logger.debug("PRIORITY photo follow-up for session %s — queueing without interrupt", _quick_key)
