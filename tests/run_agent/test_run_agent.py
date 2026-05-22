@@ -3463,6 +3463,24 @@ class TestNousCredentialRefresh:
         class _RebuiltClient:
             pass
 
+
+def test_interrupted_exhausted_turn_skips_max_iteration_summary(agent):
+    """A user interrupt must not trigger an extra toolless summary call."""
+    agent.max_iterations = 1
+    agent.iteration_budget = run_agent.IterationBudget(0)
+    agent._budget_grace_call = True
+    agent._interrupt_requested = True
+    agent._persist_session = MagicMock()
+    agent._cleanup_task_resources = MagicMock()
+    agent._handle_max_iterations = MagicMock(return_value="summary")
+
+    result = agent.run_conversation("stop-sensitive task")
+
+    agent._handle_max_iterations.assert_not_called()
+    assert result["interrupted"] is True
+    assert result["final_response"] is None
+    assert result["completed"] is False
+
         def _fake_resolve(**kwargs):
             captured.update(kwargs)
             return {

@@ -1,6 +1,7 @@
 """Tests for interrupt handling in concurrent tool execution."""
 
 import concurrent.futures
+import json
 import threading
 import time
 from unittest.mock import MagicMock, patch
@@ -261,4 +262,21 @@ def test_clear_interrupt_clears_worker_tids(monkeypatch):
         "clear_interrupt() did not clear the interrupt bit for a tracked "
         "worker tid — stale interrupt can leak into the next turn"
     )
+
+
+def test_concurrent_tool_exception_result_is_json(monkeypatch):
+    """Tool exceptions should use the same JSON error shape as registry dispatch."""
+    agent = _make_agent(monkeypatch)
+    agent._invoke_tool = MagicMock(side_effect=RuntimeError("boom"))
+
+    msg = _FakeAssistantMsg([_FakeToolCall("broken_tool", call_id="tc_broken")])
+    messages = []
+
+    agent._execute_tool_calls_concurrent(msg, messages, "test_task")
+
+    assert len(messages) == 1
+    payload = json.loads(messages[0]["content"])
+    assert "error" in payload
+    assert "broken_tool" in payload["error"]
+    assert "boom" in payload["error"]
 

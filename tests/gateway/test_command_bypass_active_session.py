@@ -342,6 +342,38 @@ class TestAllResolvableCommandsBypassGuard:
         # A file path split on whitespace: '/path/to/file.py' -> 'path/to/file.py'
         assert should_bypass_active_session("path/to/file.py") is False
 
+    def test_plugin_command_bypasses_guard_predicate(self, monkeypatch):
+        """Plugin slash commands must bypass Level 1 just like built-ins."""
+        from hermes_cli import commands
+
+        monkeypatch.setattr(
+            commands,
+            "_iter_plugin_command_entries",
+            lambda: [("plugin-metric", "Plugin metric", "")],
+        )
+
+        assert commands.should_bypass_active_session("plugin-metric") is True
+        assert commands.should_bypass_active_session("plugin_metric") is True
+
+    @pytest.mark.asyncio
+    async def test_plugin_command_bypasses_adapter_active_session_guard(self, monkeypatch):
+        from hermes_cli import commands
+
+        monkeypatch.setattr(
+            commands,
+            "_iter_plugin_command_entries",
+            lambda: [("plugin-metric", "Plugin metric", "")],
+        )
+
+        adapter = _make_adapter()
+        sk = _session_key()
+        adapter._active_sessions[sk] = asyncio.Event()
+
+        await adapter.handle_message(_make_event("/plugin-metric status"))
+
+        assert sk not in adapter._pending_messages
+        assert any("handled:plugin-metric" in r for r in adapter.sent_responses)
+
 
 # ---------------------------------------------------------------------------
 # Tests: non-bypass messages still get queued

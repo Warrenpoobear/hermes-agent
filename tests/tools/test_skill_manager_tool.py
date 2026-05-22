@@ -351,6 +351,31 @@ word word
         assert "escapes" in result["error"].lower()
         assert outside_file.read_text() == "old text here"
 
+    @pytest.mark.parametrize("action", ["edit", "patch", "write_file", "remove_file", "delete"])
+    def test_bundled_skill_mutations_are_rejected(self, tmp_path, action):
+        with _skill_dir(tmp_path), \
+             patch("tools.skill_usage._read_bundled_manifest_names", return_value={"my-skill"}), \
+             patch("tools.skill_usage._read_hub_installed_names", return_value=set()):
+            _create_skill("my-skill", VALID_SKILL_CONTENT)
+            ref = tmp_path / "my-skill" / "references" / "api.md"
+            ref.parent.mkdir(parents=True, exist_ok=True)
+            ref.write_text("original", encoding="utf-8")
+
+            if action == "edit":
+                result = _edit_skill("my-skill", VALID_SKILL_CONTENT_2)
+            elif action == "patch":
+                result = _patch_skill("my-skill", "Do the thing.", "Do something else.")
+            elif action == "write_file":
+                result = _write_file("my-skill", "references/new.md", "new")
+            elif action == "remove_file":
+                result = _remove_file("my-skill", "references/api.md")
+            else:
+                result = _delete_skill("my-skill")
+
+        assert result["success"] is False
+        assert "bundled or hub-installed" in result["error"]
+        assert (tmp_path / "my-skill" / "SKILL.md").exists()
+
 
 class TestDeleteSkill:
     def test_delete_existing(self, tmp_path):

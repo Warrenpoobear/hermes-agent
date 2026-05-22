@@ -14196,7 +14196,7 @@ class AIAgent:
                     messages.append({"role": "assistant", "content": final_response})
                     break
         
-        if final_response is None and (
+        if final_response is None and not interrupted and (
             api_call_count >= self.max_iterations
             or self.iteration_budget.remaining <= 0
         ):

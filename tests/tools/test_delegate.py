@@ -55,6 +55,7 @@ def _make_mock_parent(depth=0):
     parent._print_fn = None
     parent.tool_progress_callback = None
     parent.thinking_callback = None
+    parent.disabled_toolsets = []
     return parent
 
 
@@ -727,7 +728,16 @@ class TestSubagentCostRollup(unittest.TestCase):
 
 class TestBlockedTools(unittest.TestCase):
     def test_blocked_tools_constant(self):
-        for tool in ["delegate_task", "clarify", "memory", "send_message", "execute_code"]:
+        for tool in [
+            "delegate_task",
+            "clarify",
+            "memory",
+            "send_message",
+            "execute_code",
+            "cronjob",
+            "ha_call_service",
+            "skill_manage",
+        ]:
             self.assertIn(tool, DELEGATE_BLOCKED_TOOLS)
 
     def test_constants(self):
@@ -741,6 +751,62 @@ class TestBlockedTools(unittest.TestCase):
         self.assertTrue(_get_orchestrator_enabled())      # default
         self.assertEqual(_MIN_SPAWN_DEPTH, 1)
         self.assertEqual(_MAX_SPAWN_DEPTH_CAP, 3)
+
+    @patch("tools.delegate_tool._load_config", return_value={})
+    def test_leaf_child_filters_blocked_tools_from_composite_toolset(self, _mock_cfg):
+        parent = _make_mock_parent(depth=0)
+        parent.enabled_toolsets = ["hermes-cli"]
+
+        mock_child = MagicMock()
+        mock_child.tools = [
+            {"type": "function", "function": {"name": "web_search"}},
+            {"type": "function", "function": {"name": "send_message"}},
+            {"type": "function", "function": {"name": "execute_code"}},
+            {"type": "function", "function": {"name": "memory"}},
+            {"type": "function", "function": {"name": "cronjob"}},
+            {"type": "function", "function": {"name": "ha_call_service"}},
+            {"type": "function", "function": {"name": "skill_manage"}},
+        ]
+
+        with patch("run_agent.AIAgent", return_value=mock_child):
+            child = _build_child_agent(
+                task_index=0,
+                goal="safe child",
+                context=None,
+                toolsets=None,
+                model=None,
+                max_iterations=50,
+                parent_agent=parent,
+            )
+
+        self.assertEqual(child.valid_tool_names, {"web_search"})
+        self.assertEqual(
+            [tool["function"]["name"] for tool in child.tools],
+            ["web_search"],
+        )
+
+    @patch("tools.delegate_tool._load_config", return_value={})
+    def test_parent_disabled_toolsets_propagate_to_child(self, _mock_cfg):
+        parent = _make_mock_parent(depth=0)
+        parent.enabled_toolsets = ["hermes-cli"]
+        parent.disabled_toolsets = ["browser"]
+
+        with patch("run_agent.AIAgent") as MockAgent:
+            MockAgent.return_value = MagicMock()
+            _build_child_agent(
+                task_index=0,
+                goal="inherit restrictions",
+                context=None,
+                toolsets=None,
+                model=None,
+                max_iterations=50,
+                parent_agent=parent,
+            )
+
+        disabled = MockAgent.call_args.kwargs["disabled_toolsets"]
+        self.assertIn("browser", disabled)
+        self.assertIn("messaging", disabled)
+        self.assertIn("cronjob", disabled)
 
 
 class TestDelegationCredentialResolution(unittest.TestCase):

@@ -14776,8 +14776,8 @@ class GatewayRunner:
                 _pending_cmd_word = _pending_parts[0][1:].lower() if _pending_parts else ""
                 if _pending_cmd_word:
                     try:
-                        from hermes_cli.commands import resolve_command as _rc_pending
-                        if _rc_pending(_pending_cmd_word):
+                        from hermes_cli.commands import is_gateway_known_command as _known_pending
+                        if _known_pending(_pending_cmd_word.replace("_", "-")):
                             logger.info(
                                 "Discarding command '/%s' from pending queue — "
                                 "commands must not be passed as agent input",
