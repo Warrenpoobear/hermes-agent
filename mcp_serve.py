@@ -5,18 +5,21 @@ Starts a stdio MCP server that lets any MCP client (Claude Code, Cursor, Codex,
 etc.) list conversations, read message history, send messages, poll for live
 events, and manage approval requests across all connected platforms.
 
-Matches OpenClaw's 9-tool MCP channel bridge surface:
+Messaging tools (10) — OpenClaw channel bridge surface plus channels_list:
   conversations_list, conversation_get, messages_read, attachments_fetch,
   events_poll, events_wait, messages_send, permissions_list_open,
-  permissions_respond
+  permissions_respond, channels_list
 
-Plus: channels_list (Hermes-specific extra)
+Optional skills/knowledge tools (7) when hermes_skills_mcp is available:
+  skills_list, skills_read, agents_list, agents_get, knowledge_read,
+  learnings_read, artifacts_list
 
 Usage:
     hermes mcp serve
     hermes mcp serve --verbose
+    hermes-mcp-serve          # same; used by .cursor/mcp.json
 
-MCP client config (e.g. claude_desktop_config.json):
+MCP client config (e.g. claude_desktop_config.json or .cursor/mcp.json):
     {
         "mcpServers": {
             "hermes": {
@@ -856,6 +859,18 @@ def create_mcp_server(event_bridge: Optional[EventBridge] = None) -> "FastMCP":
         result = bridge.respond_to_approval(id, decision)
         return json.dumps(result, indent=2)
 
+    # -- Skills / Knowledge Layer tools ------------------------------------
+    # Registers: skills_list, skills_read, agents_list, agents_get,
+    #            knowledge_read, learnings_read, artifacts_list
+    try:
+        from hermes_skills_mcp import register_skills_tools
+        register_skills_tools(mcp)
+        logger.debug("Skills/knowledge MCP tools registered")
+    except ImportError:
+        logger.debug("hermes_skills_mcp not available — skills tools disabled")
+    except Exception as e:
+        logger.warning("Failed to register skills MCP tools: %s", e)
+
     return mcp
 
 
@@ -895,3 +910,29 @@ def run_mcp_server(verbose: bool = False) -> None:
         asyncio.run(_run())
     except KeyboardInterrupt:
         bridge.stop()
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    """Console-script entry point for MCP clients.
+
+    Keeping this thin wrapper here lets package installs expose a dedicated
+    ``hermes-mcp-serve`` command while preserving ``hermes mcp serve``.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="hermes-mcp-serve",
+        description="Run Hermes as a stdio MCP server.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging on stderr",
+    )
+    args = parser.parse_args(argv)
+    run_mcp_server(verbose=args.verbose)
+
+
+if __name__ == "__main__":
+    main()
