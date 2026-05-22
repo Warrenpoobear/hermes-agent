@@ -7,8 +7,8 @@ import pytest
 
 def test_default_origin_is_foreground():
     from tools.skill_provenance import get_current_write_origin
-    # In a fresh ContextVar context, default kicks in.
-    ctx = contextvars.copy_context()
+    # Empty context — not copy_context() — so pytest thread pollution cannot leak.
+    ctx = contextvars.Context()
     origin = ctx.run(get_current_write_origin)
     assert origin == "foreground"
 

@@ -53,12 +53,16 @@ class TestChromiumInstalled:
 
     def test_false_when_dir_empty(self, monkeypatch, tmp_path):
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
         assert bt._chromium_installed() is False
 
     def test_false_when_only_unrelated_browsers(self, monkeypatch, tmp_path):
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
         (tmp_path / "firefox-1234").mkdir()
         (tmp_path / "webkit-5678").mkdir()
         assert bt._chromium_installed() is False
@@ -68,7 +72,9 @@ class TestChromiumInstalled:
         bogus = tmp_path / "nope"
         bogus.write_text("")
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(bogus))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
         assert bt._chromium_installed() is False
 
     def test_result_cached(self, monkeypatch, tmp_path):
@@ -87,7 +93,9 @@ class TestCheckBrowserRequirementsChromium:
         monkeypatch.setattr(bt, "_requires_real_termux_browser_install", lambda _: False)
         monkeypatch.setattr(bt, "_get_cloud_provider", lambda: None)
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
 
         assert bt.check_browser_requirements() is False
 
@@ -138,7 +146,9 @@ class TestRunBrowserCommandChromiumGuard:
         monkeypatch.setattr(bt, "_requires_real_termux_browser_install", lambda _: False)
         monkeypatch.setattr(bt, "_is_local_mode", lambda: True)
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
 
         # If we ever reached subprocess.Popen the test would hang — the
         # fast-fail guard prevents that.
@@ -157,7 +167,9 @@ class TestRunBrowserCommandChromiumGuard:
         monkeypatch.setattr(bt, "_is_local_mode", lambda: True)
         monkeypatch.setattr(bt, "_running_in_docker", lambda: True)
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
 
         result = bt._run_browser_command("task-1", "navigate", ["https://example.com"])
         assert result["success"] is False
@@ -169,7 +181,9 @@ class TestRunBrowserCommandChromiumGuard:
         monkeypatch.setattr(bt, "_is_local_mode", lambda: True)
         monkeypatch.setattr(bt, "_running_in_docker", lambda: False)
         monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+        monkeypatch.delenv("AGENT_BROWSER_EXECUTABLE_PATH", raising=False)
         monkeypatch.setattr("os.path.expanduser", lambda p: str(tmp_path / "fakehome"))
+        monkeypatch.setattr(bt.shutil, "which", lambda _name: None)
 
         result = bt._run_browser_command("task-1", "navigate", ["https://example.com"])
         assert result["success"] is False

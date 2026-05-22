@@ -235,6 +235,10 @@ DEFAULT_CONTEXT_LENGTHS = {
     "zai-org/GLM-5": 202752,
 }
 
+DEFAULT_CONTEXT_LENGTHS_LOWER = {
+    key.lower(): value for key, value in DEFAULT_CONTEXT_LENGTHS.items()
+}
+
 _CONTEXT_LENGTH_KEYS = (
     "context_length",
     "context_window",
@@ -1263,6 +1267,11 @@ def get_model_context_length(
     # 0. Explicit config override — user knows best
     if config_context_length is not None and isinstance(config_context_length, int) and config_context_length > 0:
         return config_context_length
+
+    # 0a. Exact hardcoded model id (before live probes that may return stale metadata).
+    model_lower = (model or "").lower()
+    if model_lower in DEFAULT_CONTEXT_LENGTHS_LOWER:
+        return DEFAULT_CONTEXT_LENGTHS_LOWER[model_lower]
 
     # 0b. custom_providers per-model override — check before any probe.
     # This closes the gap where /model switch and display paths used to fall

@@ -301,7 +301,9 @@ class TestProviderPersistsAfterModelSave:
             lambda api_key=None, base_url=None, timeout=5.0: ["publisher/model-a"],
         )
 
-        with patch("builtins.input", side_effect=[""]):
+        with patch(
+            "hermes_cli.main._prompt_api_key", return_value=("lm-token", False)
+        ), patch("builtins.input", return_value=""):
             _model_flow_api_key_provider(load_config(), "lmstudio", "old-model")
 
         import yaml
@@ -393,6 +395,9 @@ class TestBaseUrlValidation:
         monkeypatch.setenv("STEPFUN_API_KEY", "stepfun-test-key")
 
         with patch(
+            "hermes_cli.main._prompt_api_key",
+            return_value=("stepfun-test-key", False),
+        ), patch(
             "hermes_cli.main._prompt_provider_choice",
             return_value=1,
         ), patch(

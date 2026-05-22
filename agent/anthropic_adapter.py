@@ -1963,6 +1963,14 @@ def build_anthropic_kwargs(
             base_url,
             drop_context_1m_beta=drop_context_1m_beta,
         ))
+        # AnthropicBedrock has no HTTP base_url; per-request extra_headers
+        # override client-level default_headers, so restore the 1M beta here.
+        if (
+            not _normalize_base_url_text(base_url)
+            and not drop_context_1m_beta
+            and _CONTEXT_1M_BETA not in betas
+        ):
+            betas.append(_CONTEXT_1M_BETA)
         if is_oauth:
             betas.extend(_OAUTH_ONLY_BETAS)
         betas.append(_FAST_MODE_BETA)

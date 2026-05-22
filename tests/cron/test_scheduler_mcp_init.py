@@ -52,9 +52,16 @@ def test_run_job_calls_discover_mcp_tools_before_agent_construction():
                 "messages": [],
             }
 
+    _runtime = {
+        "provider": "openrouter",
+        "api_key": "sk-test",
+        "base_url": None,
+        "api_mode": "chat_completions",
+    }
     with patch("tools.mcp_tool.discover_mcp_tools", side_effect=fake_discover), \
          patch("run_agent.AIAgent", _FakeAgent), \
-         patch("cron.scheduler._resolve_cron_enabled_toolsets", return_value=None):
+         patch("cron.scheduler._resolve_cron_enabled_toolsets", return_value=None), \
+         patch("hermes_cli.runtime_provider.resolve_runtime_provider", return_value=_runtime):
         scheduler.run_job(job)
 
     # Discovery must be called, and must be called BEFORE agent construction.
@@ -96,11 +103,18 @@ def test_run_job_tolerates_discover_mcp_tools_failure():
     def fake_discover_that_raises():
         raise RuntimeError("MCP server unreachable")
 
+    _runtime = {
+        "provider": "openrouter",
+        "api_key": "sk-test",
+        "base_url": None,
+        "api_mode": "chat_completions",
+    }
     with patch(
         "tools.mcp_tool.discover_mcp_tools",
         side_effect=fake_discover_that_raises,
     ), patch("run_agent.AIAgent", _FakeAgent), \
-         patch("cron.scheduler._resolve_cron_enabled_toolsets", return_value=None):
+         patch("cron.scheduler._resolve_cron_enabled_toolsets", return_value=None), \
+         patch("hermes_cli.runtime_provider.resolve_runtime_provider", return_value=_runtime):
         # Should NOT raise
         success, doc, final_response, error = scheduler.run_job(job)
 

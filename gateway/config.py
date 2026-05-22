@@ -108,6 +108,15 @@ class Platform(Enum):
     BLUEBUBBLES = "bluebubbles"
     QQBOT = "qqbot"
     YUANBAO = "yuanbao"
+
+    @classmethod
+    def __getattr__(cls, name: str):
+        """Resolve dynamic plugin members (e.g. Platform.GOOGLE_CHAT)."""
+        member = cls._member_map_.get(name)
+        if member is not None:
+            return member
+        raise AttributeError(f"{name!r} not found in {cls.__name__}")
+
     @classmethod
     def _missing_(cls, value):
         """Accept unknown platform names only for known plugin adapters.
