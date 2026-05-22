@@ -19,6 +19,15 @@ async def test_restart_command_while_busy_requests_drain_without_interrupt(monke
     # Ensure INVOCATION_ID is NOT set — systemd sets this in service mode,
     # which changes the restart call signature.
     monkeypatch.delenv("INVOCATION_ID", raising=False)
+    # Cloud CI images often have /.dockerenv; force interactive restart path.
+    _real_exists = __import__("os").path.exists
+
+    def _exists(path):
+        if path in ("/.dockerenv", "/run/.containerenv"):
+            return False
+        return _real_exists(path)
+
+    monkeypatch.setattr(__import__("os").path, "exists", _exists)
     runner, _adapter = make_restart_runner()
     runner.request_restart = MagicMock(return_value=True)
     event = MessageEvent(
