@@ -41,6 +41,8 @@ logger = logging.getLogger("hermes.mcp_skills")
 _SNAPSHOT_TEXT_CAP = 4_000
 _SNAPSHOT_LIST_CAP = 25
 _HEARTBEAT_STALE_SECONDS = 24 * 60 * 60
+# Bump this version when the documented authority hierarchy changes.
+# It is an API contract marker for MCP clients, not derived from docs.
 _SOURCE_OF_TRUTH_HIERARCHY = {
     "version": "2026-05-22.cursor-hermes.v1",
     "reference": "website/docs/user-guide/features/cursor-hermes.md#source-of-truth-hierarchy",
