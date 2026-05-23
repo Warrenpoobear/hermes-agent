@@ -1,5 +1,6 @@
 import json
 import os
+import queue
 import sys
 import threading
 import time
@@ -4874,6 +4875,8 @@ def test_notification_poller_requeues_when_busy(monkeypatch):
     sess = _session(running=True)  # agent is busy
     server._sessions["sid_busy"] = sess
     monkeypatch.setattr(server, "_emit", lambda *a, **kw: emitted.append(a))
+    isolated_queue = queue.Queue()
+    monkeypatch.setattr(process_registry, "completion_queue", isolated_queue)
 
     while not process_registry.completion_queue.empty():
         process_registry.completion_queue.get_nowait()

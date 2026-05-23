@@ -911,7 +911,8 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         creds = _resolve_delegation_credentials(cfg, parent)
 
         self.assertEqual(creds["model"], "server-default-model")
-        self.assertEqual(creds["provider"], "custom")
+        # Named custom:* providers keep the configured id when runtime resolves as custom.
+        self.assertEqual(creds["provider"], "custom:my-server")
         self.assertEqual(creds["base_url"], "https://my-server.example/v1")
         mock_resolve.assert_called_once_with(
             requested="custom:my-server",

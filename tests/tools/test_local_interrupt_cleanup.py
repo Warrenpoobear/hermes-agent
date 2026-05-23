@@ -31,6 +31,18 @@ def _isolate_hermes_home(tmp_path, monkeypatch):
 
 def _pgid_still_alive(pgid: int) -> bool:
     """Return True if any process in the given process group is still alive."""
+    proc_root = "/proc"
+    if os.path.isdir(proc_root):
+        for name in os.listdir(proc_root):
+            if not name.isdigit():
+                continue
+            try:
+                stat = open(os.path.join(proc_root, name, "stat"), encoding="utf-8").read().split()
+            except OSError:
+                continue
+            if len(stat) > 4 and int(stat[4]) == pgid and stat[2] != "Z":
+                return True
+        return False
     try:
         os.killpg(pgid, 0)  # signal 0 = existence check
         return True
