@@ -891,7 +891,8 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertEqual(creds["api_key"], "sk-or-test-key")
         self.assertEqual(creds["api_mode"], "chat_completions")
         mock_resolve.assert_called_once_with(
-            requested="openrouter", target_model="google/gemini-3-flash-preview"
+            requested="openrouter",
+            target_model="google/gemini-3-flash-preview",
         )
 
     @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
@@ -914,7 +915,8 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertEqual(creds["provider"], "custom:my-server")
         self.assertEqual(creds["base_url"], "https://my-server.example/v1")
         mock_resolve.assert_called_once_with(
-            requested="custom:my-server", target_model=None
+            requested="custom:my-server",
+            target_model=None,
         )
 
     def test_direct_endpoint_uses_configured_base_url_and_api_key(self):
@@ -1037,7 +1039,8 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertEqual(creds["base_url"], "https://inference-api.nousresearch.com/v1")
         self.assertEqual(creds["api_key"], "nous-agent-key-xyz")
         mock_resolve.assert_called_once_with(
-            requested="nous", target_model="hermes-3-llama-3.1-8b"
+            requested="nous",
+            target_model="hermes-3-llama-3.1-8b",
         )
 
     @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
@@ -1881,8 +1884,8 @@ class TestDelegateHeartbeat(unittest.TestCase):
 
         child.run_conversation.side_effect = slow_run
 
-        # At interval 0.05s, idle threshold (5 cycles) trips at ~0.25s.
-        # We should see the heartbeat stop firing well before 0.6s.
+        # Patch idle ceiling to 5 cycles so this test stays fast/deterministic
+        # (production default is 15 cycles at 30s).
         with patch("tools.delegate_tool._HEARTBEAT_INTERVAL", 0.05), patch(
             "tools.delegate_tool._HEARTBEAT_STALE_CYCLES_IDLE", 5
         ):

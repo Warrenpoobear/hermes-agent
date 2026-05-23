@@ -53,10 +53,14 @@ def _make_agent(monkeypatch):
             self._tool_worker_threads: set = set()
             self._tool_worker_threads_lock = threading.Lock()
             self._active_children_lock = threading.Lock()
-            self._tool_guardrails = MagicMock()
-            self._tool_guardrails.before_call.return_value = MagicMock(action="allow")
-            self._tool_guardrails.after_call.return_value = MagicMock(action="allow")
-            self._append_guardrail_observation = MagicMock()
+            from agent.tool_guardrails import (
+                ToolCallGuardrailConfig,
+                ToolCallGuardrailController,
+            )
+
+            self._tool_guardrails = ToolCallGuardrailController(
+                ToolCallGuardrailConfig()
+            )
 
         def _touch_activity(self, desc):
             self._last_activity = time.time()
@@ -76,12 +80,15 @@ def _make_agent(monkeypatch):
         def _has_stream_consumers(self):
             return False
 
-        def _tool_result_content_for_active_model(self, tool_name, result):
-            return result
-
     stub = _Stub()
     # Bind the real methods under test
     stub._execute_tool_calls_concurrent = _ra.AIAgent._execute_tool_calls_concurrent.__get__(stub)
+    stub._append_guardrail_observation = _ra.AIAgent._append_guardrail_observation.__get__(
+        stub
+    )
+    stub._tool_result_content_for_active_model = (
+        _ra.AIAgent._tool_result_content_for_active_model.__get__(stub)
+    )
     stub.interrupt = _ra.AIAgent.interrupt.__get__(stub)
     stub.clear_interrupt = _ra.AIAgent.clear_interrupt.__get__(stub)
     # /steer injection (added in PR #12116) fires after every concurrent
@@ -104,6 +111,45 @@ class _FakeAssistantMsg:
         self.tool_calls = tool_calls
 
 
+def test_concurrent_interrupt_cancels_pending(monkeypatch):
+    """When _interrupt_requested is set during concurrent execution,
+    the wait loop should exit early and cancelled tools get interrupt messages."""
+    agent = _make_agent(monkeypatch)
+
+    # Create a tool that blocks until interrupted
+    barrier = threading.Event()
+
+    original_invoke = agent._invoke_tool
+
+    def slow_tool(name, args, task_id, call_id=None, **kwargs):
+        if name == "slow_one":
+            # Block until the test sets the interrupt
+            barrier.wait(timeout=10)
+            return '{"slow": true}'
+        return '{"fast": true}'
+
+    agent._invoke_tool = MagicMock(side_effect=slow_tool)
+
+    tc1 = _FakeToolCall("fast_one", call_id="tc_fast")
+    tc2 = _FakeToolCall("slow_one", call_id="tc_slow")
+    msg = _FakeAssistantMsg([tc1, tc2])
+    messages = []
+
+    def _set_interrupt_after_delay():
+        time.sleep(0.3)
+        agent._interrupt_requested = True
+        barrier.set()  # unblock the slow tool
+
+    t = threading.Thread(target=_set_interrupt_after_delay)
+    t.start()
+
+    agent._execute_tool_calls_concurrent(msg, messages, "test_task")
+    t.join()
+
+    # Both tools should have results in messages
+    assert len(messages) == 2
+    # The interrupt was detected
+    assert agent._interrupt_requested is True
 
 
 def test_concurrent_preflight_interrupt_skips_all(monkeypatch):

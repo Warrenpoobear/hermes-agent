@@ -2038,6 +2038,7 @@ def build_anthropic_kwargs(
     base_url: str | None = None,
     fast_mode: bool = False,
     drop_context_1m_beta: bool = False,
+    include_context_1m_beta: bool = False,
 ) -> Dict[str, Any]:
     """Build kwargs for anthropic.messages.create().
 
@@ -2236,10 +2237,8 @@ def build_anthropic_kwargs(
             base_url,
             drop_context_1m_beta=drop_context_1m_beta,
         ))
-        # AnthropicBedrock has no HTTP base_url; per-request extra_headers
-        # override client-level default_headers, so restore the 1M beta here.
         if (
-            not _normalize_base_url_text(base_url)
+            include_context_1m_beta
             and not drop_context_1m_beta
             and _CONTEXT_1M_BETA not in betas
         ):
