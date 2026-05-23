@@ -116,3 +116,33 @@ def test_fleet_context_snapshot_gateway_unavailable_keeps_skills_mode(snapshot_e
 
     assert result["gateway_reachable"] is False
     assert result["mode"] == "skills_only"
+
+
+def test_skills_list_supports_external_hermes_agents_dir(tmp_path, monkeypatch):
+    repo = tmp_path / "hermes-agent"
+    repo.mkdir()
+    agents_dir = tmp_path / "product" / "agents"
+    agent_dir = agents_dir / "alpha"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "SOUL.md").write_text("# alpha\n", encoding="utf-8")
+
+    monkeypatch.setenv("HERMES_REPO", str(repo))
+    monkeypatch.setenv("HERMES_AGENTS_DIR", str(agents_dir))
+
+    import hermes_skills_mcp as mcp
+
+    class _FakeMcp:
+        def tool(self):
+            def _decorator(fn):
+                setattr(self, fn.__name__, fn)
+                return fn
+            return _decorator
+
+    fake = _FakeMcp()
+    mcp.register_skills_tools(fake)
+
+    result = json.loads(fake.skills_list("agents"))
+
+    assert result["paths"]["agents_dir"] == str(agents_dir)
+    assert result["agents_skills"][0]["agent"] == "alpha"
+    assert result["agents_skills"][0]["path"] == str(agent_dir)

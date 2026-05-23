@@ -81,14 +81,15 @@ Should start with no errors and wait for requests. Press `Ctrl+C` to stop.
 
 ## 🎯 What You Get in Cursor
 
-Once connected, Cursor Composer can call **17 MCP tools** from Hermes (see `website/docs/user-guide/features/mcp.md`):
+Once connected, Cursor Composer can call **18 MCP tools** from Hermes (see `website/docs/user-guide/features/mcp.md`):
 
 ### Messaging (10 tools)
 - List conversations and read message history across connected platforms
 - Poll or wait for live events; send messages (gateway must be running for sends)
 - List channels and respond to approval prompts seen by the bridge
 
-### Skills & knowledge (7 tools, read-only)
+### Skills & knowledge (8 tools, read-only)
+- Get a bounded `fleet_context_snapshot` bootstrap payload
 - List/read agent `SOUL.md` files and repo skills
 - Browse agent registry, knowledge-layer artifacts, learnings, and artifacts
 
@@ -107,7 +108,7 @@ Cursor will access Hermes' tools and skills to execute this end-to-end.
 
 ## 🔗 Integration Points
 
-- **Cursor Composer**: Full access to all Hermes tools
+- **Cursor Composer**: Access to Hermes MCP messaging + skills/context tools
 - **Cursor Editor Tools**: Can invoke Hermes for specific tasks
 - **Hermes from Cursor**: Run complex multi-step workflows
 - **Persistent State**: Hermes memory carries across Cursor sessions

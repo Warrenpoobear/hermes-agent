@@ -147,13 +147,14 @@ Conversations, messages, events, approvals across connected platforms:
 `attachments_fetch`, `events_poll`, `events_wait`, `messages_send`,
 `channels_list`, `permissions_list_open`, `permissions_respond`
 
-### Skills & Knowledge Tools (hermes_skills_mcp.py, 7 tools)
+### Skills & Knowledge Tools (hermes_skills_mcp.py, 8 tools)
 
 Read-only access to the custom Hermes agent fleet, skills, knowledge layer,
 and persistent memory.
 
 | Tool | Purpose |
 |------|---------|
+| `fleet_context_snapshot` | One bounded bootstrap payload for IDE sessions |
 | `skills_list` | List all agent SOUL.md files and repo skills |
 | `skills_read` | Read a specific SOUL.md or skill document |
 | `agents_list` | List agents with registry data and optional heartbeat |
@@ -162,9 +163,10 @@ and persistent memory.
 | `learnings_read` | Read .learnings/ memory files (HOT/WARM/COLD tiers) |
 | `artifacts_list` | Browse the artifacts/ directory tree |
 
-**Key paths** (resolved via HERMES_HOME and HERMES_REPO):
-- `agents/` - Custom agent directories, each with SOUL.md, HEARTBEAT.md
-- `agents/AGENT_REGISTRY.json` - Authoritative agent fleet manifest
+**Key paths** (agent documents resolve via `HERMES_AGENTS_DIR`, then
+`HERMES_REPO/agents`, then `HERMES_HOME/hermes-agent/agents`):
+- `agents/` or `HERMES_AGENTS_DIR` - Custom agent directories, each with SOUL.md, HEARTBEAT.md
+- `agents/AGENT_REGISTRY.json` - Index/discovery manifest (not behavioral truth)
 - `artifacts/ops/knowledge_layer/` - Knowledge layer state files
 - `artifacts/ops/held_spec_ledger/` - Held specification tracking
 - `.learnings/memory.md` - HOT-tier persistent memory (100-line cap)
@@ -176,8 +178,7 @@ and persistent memory.
 - All tools are **read-only** — no mutation of skills, registry, or artifacts
 - Gracefully degrades: if `hermes_skills_mcp` import fails, the messaging
   tools still work (logged at DEBUG level)
-- Path resolution uses HERMES_HOME/HERMES_REPO env vars, same as the rest
-  of the codebase
+- Path resolution uses HERMES_AGENTS_DIR/HERMES_REPO/HERMES_HOME env vars
 
 ## Governance Constraints
 

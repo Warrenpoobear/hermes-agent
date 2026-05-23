@@ -114,6 +114,14 @@ def _file_mtime_iso(path: Path) -> str:
         return ""
 
 
+def _display_path(path: Path) -> str:
+    """Return a repo-relative path when possible, else an absolute path."""
+    try:
+        return str(path.relative_to(_get_hermes_repo()))
+    except ValueError:
+        return str(path)
+
+
 def _dir_listing(path: Path, max_depth: int = 2, _depth: int = 0) -> List[dict]:
     """Recursively list a directory up to max_depth."""
     if not path.is_dir() or _depth > max_depth:
@@ -126,7 +134,7 @@ def _dir_listing(path: Path, max_depth: int = 2, _depth: int = 0) -> List[dict]:
             entry: dict = {
                 "name": item.name,
                 "type": "directory" if item.is_dir() else "file",
-                "path": str(item.relative_to(_get_hermes_repo())),
+                "path": _display_path(item),
             }
             if item.is_file():
                 try:
@@ -566,7 +574,7 @@ def register_skills_tools(mcp) -> None:
                     entry: dict = {
                         "agent": agent_dir.name,
                         "has_soul_md": soul.exists(),
-                        "path": str(agent_dir.relative_to(_get_hermes_repo())),
+                        "path": _display_path(agent_dir),
                     }
                     if soul.exists():
                         entry["soul_md_modified"] = _file_mtime_iso(soul)
@@ -954,4 +962,4 @@ def register_skills_tools(mcp) -> None:
             "entries": entries,
         }, indent=2)
 
-    logger.debug("Registered 7 skills/knowledge MCP tools")
+    logger.debug("Registered 8 skills/knowledge MCP tools")

@@ -51,6 +51,7 @@ Hermes MCP is really two products behind one server:
 
 | Tool | Purpose |
 |------|---------|
+| `fleet_context_snapshot` | One bounded bootstrap payload: mode, paths, registry summary, stale heartbeats, HOT memory excerpt, latest-state digest, held-spec flags, missing layers, warnings |
 | `skills_list` | Agent SOUL.md dirs + repo `skills/` catalog |
 | `skills_read` | Read SOUL.md or skill files |
 | `agents_list` | Registry + optional heartbeat files |
@@ -90,7 +91,7 @@ When layers disagree, use this precedence (highest first):
 
 Today, a thorough Cursor session often calls several MCP tools in sequence. That is correct but **procedural** — it depends on env vars, path overrides, and operator habit.
 
-**Direction:** a single `fleet_context_snapshot` tool (planned) should return registry summary, HOT learnings excerpt, `latest_state` digest, and held-spec flags in one call. Until then, use the checklist in `.cursor/rules/hermes-fleet.mdc` or `CLAUDE.md`.
+Use `fleet_context_snapshot` as the preferred first call. It returns a bounded registry summary, HOT learnings excerpt, `latest_state` digest, held-spec flags, gateway reachability, missing layers, warnings, and source-of-truth hierarchy reference in one payload. If unavailable on an older Hermes install, use the fallback checklist in `.cursor/rules/hermes-fleet.mdc` or `CLAUDE.md`.
 
 ## Read-only fleet tools (by design)
 
