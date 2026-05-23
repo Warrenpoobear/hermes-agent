@@ -60,6 +60,13 @@ def _pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
+    proc_state = Path(f"/proc/{pid}/stat")
+    try:
+        parts = proc_state.read_text(encoding="utf-8", errors="replace").split()
+        if len(parts) > 2 and parts[2] == "Z":
+            return False
+    except OSError:
+        pass
     return True
 
 

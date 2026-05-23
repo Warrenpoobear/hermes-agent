@@ -201,6 +201,7 @@ async def test_start_gateway_replace_force_uses_terminate_pid(monkeypatch, tmp_p
     def _mock_remove_pid_file():
         _pid_state["alive"] = False
     monkeypatch.setattr("gateway.status.get_running_pid", _mock_get_running_pid)
+    monkeypatch.setattr("gateway.status._pid_exists", lambda pid: _pid_state["alive"])
     monkeypatch.setattr("gateway.status.remove_pid_file", _mock_remove_pid_file)
     monkeypatch.setattr(
         "gateway.status.release_all_scoped_locks",

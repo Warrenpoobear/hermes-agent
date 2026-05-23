@@ -30,6 +30,12 @@ def sample_wav(tmp_path):
     return str(wav_path)
 
 
+@pytest.fixture(autouse=True)
+def _not_in_container(monkeypatch):
+    """Keep host/container CI markers from affecting mocked audio tests."""
+    monkeypatch.setattr("hermes_constants.is_container", lambda: False)
+
+
 @pytest.fixture
 def temp_voice_dir(tmp_path, monkeypatch):
     """Redirect _TEMP_DIR to a temporary path."""
