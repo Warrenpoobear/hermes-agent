@@ -1,117 +1,221 @@
-# CLAUDE.md — Hermes Agent Fleet
+# Hermes Agent - Claude Code Guide
 
-## Project Identity
-Multi-agent system for biotech investment monitoring and operational automation.
-Maintained by Wake Robin's Director of Investments. Production fleet runs on OpenClaw runtime.
+This file is the Claude Code entry point for this repository. The canonical,
+more complete agent/developer guide is `AGENTS.md`; use it as the source of
+truth when details differ.
 
-## Agent Fleet
-- 30 total agents per `agents/AGENT_REGISTRY.json` (authoritative source, schema v1.0)
-- 27 active, 1 suppressed (bioshort_watch), 1 retired (company_news_ingest), 1 shadow (shadow_watch)
-- Never hardcode agent counts — always source from AGENT_REGISTRY.json with a dated citation
+## MANDATORY: Fetch Hermes Context First
 
-## Authority Levels
-```
-observe_only < observe_and_propose < write_artifacts < mutate_data < mutate_config
-```
-Only `crt_resolution_watcher` holds `mutate_data` (writes to catalyst resolution tables under orchestrator supervision).
-No agent may modify production weights without traversing the full multi-gate promotion path.
+**Before doing ANY work in this repo, load fleet context via Hermes MCP.** Do not
+rely on cached or stale context from previous sessions.
 
-## Model Configuration
-- **Primary**: Llama 3.3 70B Instruct Turbo (Together AI) — all agents default
-- **Fallback**: Anthropic Claude SDK (for Claude-specific models)
-- **Routing**: "llama" models -> Together API (OpenAI-compatible), "claude" -> Anthropic SDK
-- **Previous**: OpenRouter (out of credits as of 2026-05-13)
+**Canonical reference:** [Cursor & Hermes](website/docs/user-guide/features/cursor-hermes.md)
+(source-of-truth hierarchy, skills-only vs gateway mode, `HERMES_AGENTS_DIR`).
 
-## Inference Parameters
-| Parameter | Value | Rationale |
-|-----------|-------|-----------|
-| Temperature | 0.2 | Governance determinism |
-| Frequency penalty | 0.1 | Reduce repetition loops |
-| Top_p | 0.95 | Tighter nucleus sampling |
-| Repetition penalty | 1.2 | Anti-loop guard |
-| API timeout | 2400s | Together cold-start variance (8-12s spikes) |
-| Retry strategy | Exponential backoff | 500ms-8000ms delays |
-| Compression threshold | 0.5 | Less aggressive for 131K context |
+**Cursor rule:** `.cursor/rules/hermes-fleet.mdc` mirrors this checklist.
 
-## Llama-Specific Prompting Rules
-- IF/THEN chains instead of open-ended reasoning
-- Step numbering for multi-step workflows
-- Schema-first output format — define output structure before requesting content
-- No inferred data; report missing fields explicitly
-- Never say "some" or "several" — use specific counts or "unknown"
+### Session Start Checklist
 
-## Uncertainty Handling (All Agents)
-- Missing artifacts -> RED or FAIL (never GUESS)
-- Confidence < 0.7 -> escalate to operator
-- Missing drift data -> FAIL (not infer)
-- Boundary/ambiguous cases -> WARN or ALERT (conservative)
-- Unreachable agent status -> MEDIUM severity (not healthy)
-- Missing last_run -> anomalous (not healthy)
+Prefer `fleet_context_snapshot()` when available; otherwise run:
 
-## Three-Lane Routing
-| Lane | Purpose | Tools |
-|------|---------|-------|
-| A — Deterministic | Production pipeline, cron | Scripts, static checks only |
-| B — Cheap Monitoring | Fleet health, anomaly detection | Low-risk agents (observe_only) |
-| C — Manual Engineering | Architecture changes, spec work | Claude Code, human review |
+1. **`skills_list()`** — discover all custom agents and their SOUL.md files.
+   This tells you what agents exist, which have skills documents, and where
+   they live on disk.
 
-No cron job may depend on a gateway token.
-Terminal agents (e.g., ops_supervisor) are intentionally unsupervised and do not carry HEARTBEAT.md.
+2. **`agents_list(include_heartbeat=true)`** — load the full agent registry
+   with lane assignments, authority levels, status, and live heartbeat data.
+   This is how you know which agents are healthy vs. stale.
 
-## Monitoring Stack
-| Layer | Tool | Purpose |
-|-------|------|---------|
-| Heartbeat | `tools/agent_heartbeat_checks.py` | Per-agent health |
-| Supervisor | `agents/ops_supervisor/supervisor.py` | Fleet-wide anomaly classification |
-| Post-snapshot | `tools/run_post_snapshot_supervisor.py` | Post-pipeline task orchestration |
-| Sentinel | `tools/agent_supervisor_sentinel.py` | Final watchdog |
-| Gateway | `~/.hermes/monitor_together_latency.py` | Latency trends, alerts on <80% success or >5s avg |
+3. **`learnings_read()`** — read the HOT-tier persistent memory
+   (`.learnings/memory.md`). This contains corrections, patterns, and
+   operational knowledge the fleet has accumulated. Respect the 100-line cap.
 
-## Anomaly Classification
-| Classification | Severity | Meaning |
-|----------------|----------|---------|
-| new | ORANGE | First occurrence |
-| carried | YELLOW | Same anomaly seen yesterday (exact text match) |
-| resolved | GREEN | Previously seen, now gone |
+4. **`knowledge_read(artifact="latest_state")`** — load the current knowledge
+   layer state. This is the fleet's shared understanding of production status,
+   anomalies, and operational context.
 
-## Herald Pipeline
-Done predicate requires BOTH:
-- `data/press_releases/deduped/deduped_{date}.jsonl`
-- `data/press_releases/classified/classified_{date}.jsonl`
+5. **`knowledge_read(artifact="held_spec_ledger")`** — check for any held
+   specifications that constrain what changes are allowed.
 
-If classification failed but dedupe exists, next supervisor run retries classification.
+### Before Modifying a Specific Agent
 
-## OpenClaw Runtime
-- Gateway: 127.0.0.1:18789, loopback only, auth via setup token
-- Workspace per agent: `agents/{agent_name}/` with SOUL.md, TOOLS.md, HEARTBEAT.md
-- Status: maintenance-only as of mid-May 2026 (stable, no new features expected)
-- Migration path: `hermes claw migrate` available but NOT approved — Tier 4 governance decision
+When the task involves a specific agent (e.g. "fix herald", "update bellringer"):
 
-## Key References
-- Agent fleet documentation: `agents/AGENTS.md` (46KB)
-- Contributor guide: `CONTRIBUTING.md` (28KB)
-- Agent registry: `agents/AGENT_REGISTRY.json`
-- Governance policy: see biotech-screener `governance/AGENT_ROUTING_POLICY.md`
-- Ops routing: `docs/ops/hermes_openclaw_routing_policy.md`
+1. **`skills_read(name="<agent_name>")`** — read the agent's SOUL.md. This
+   defines the agent's identity, purpose, constraints, and behavioral rules.
+   You must understand the SOUL.md before changing anything about the agent.
 
-## Commands
+2. **`agents_get(name="<agent_name>")`** — get the full agent detail including
+   registry entry, heartbeat status, and file listing.
+
+3. **`knowledge_read(artifact="contradiction_ledger")`** — check for known
+   contradictions or discrepancies that may affect this agent.
+
+### Before Modifying Pipeline or Infrastructure
+
+When the task involves pipeline code, cron, CI, or infrastructure:
+
+1. **`artifacts_list()`** — browse the artifacts directory to understand what
+   operational outputs exist and their structure.
+
+2. **`knowledge_read(artifact="operator_brief")`** — read the latest daily
+   operator brief for current production status and known issues.
+
+3. **`learnings_read(file="projects/")`** — list project-specific memory files
+   for relevant namespace context.
+
+### Why This Matters
+
+The Hermes fleet has 30 agents with custom SOUL.md files, a 5-tier authority
+model, 3 execution lanes, and a 4-layer monitoring stack. Changes that ignore
+this context risk:
+
+- Breaking agent authority boundaries
+- Violating held specifications
+- Contradicting fleet learnings
+- Introducing regressions into a production pipeline that runs daily
+
+**Read first. Then code.**
+
+---
+
+## Start Here
+
+- Work from the current git branch unless the user asks you to switch.
+- Prefer the repo's existing patterns and helper APIs over new abstractions.
+- Do not revert unrelated user changes in the working tree.
+- Keep edits scoped to the request and the affected subsystem.
+
+## Environment
+
 ```bash
-# Docker
-docker compose build
-docker compose up -d
-
-# Agent health
-python tools/agent_heartbeat_checks.py
-python agents/ops_supervisor/supervisor.py
-
-# Gateway monitoring
-python ~/.hermes/monitor_together_latency.py
+source .venv/bin/activate  # or: source venv/bin/activate
 ```
 
-## Do Not
-- Do not reactivate bioshort_watch LLM
-- Do not modify production weights without full promotion path
-- Do not hardcode agent counts (source from AGENT_REGISTRY.json)
-- Do not let any cron job depend on a gateway token
-- Do not adopt Hermes runtime without Tier 4 governance review
-- Do not allow self-evolving skill loops without version control and review
+`scripts/run_tests.sh` is the required test wrapper. It probes `.venv`, `venv`,
+and the shared Hermes checkout venv, then runs pytest with CI-like environment
+settings.
+
+## Test Commands
+
+```bash
+scripts/run_tests.sh
+scripts/run_tests.sh tests/gateway/
+scripts/run_tests.sh tests/tools/test_delegate.py::TestBlockedTools
+.venv/bin/ruff check .
+```
+
+Do not call `pytest` directly unless there is no alternative; the wrapper
+normalizes credentials, HOME, timezone, locale, and worker count.
+
+## Important Project Invariants
+
+- Profile-aware state paths must use `get_hermes_home()` from
+  `hermes_constants`; user-facing path text should use `display_hermes_home()`.
+- Tests must not write to a real `~/.hermes/`; use the existing fixtures and set
+  `HERMES_HOME` when mocking home directories.
+- Prompt caching must not be broken mid-conversation. Slash commands that alter
+  tools, skills, memory, or system prompt state should defer invalidation unless
+  an explicit `--now` flow exists.
+- Built-in tools require both registration in `tools/*.py` and exposure through
+  `toolsets.py`.
+- Plugin capabilities should use generic plugin hooks/surfaces; do not hardcode
+  plugin-specific logic into core files.
+
+## High-Value Files
+
+- `run_agent.py` - `AIAgent`, conversation loop, interrupts, compression.
+- `model_tools.py` - tool discovery, schema filtering, function dispatch.
+- `toolsets.py` - toolset definitions and platform bundles.
+- `cli.py` - classic CLI and slash-command dispatch.
+- `gateway/run.py` - messaging gateway runner.
+- `hermes_cli/config.py` - default config and config migration.
+- `tools/` - built-in tool implementations.
+- `plugins/` - plugin systems and bundled plugins.
+- `tests/` - pytest suite.
+
+## MCP Server & Skills Integration
+
+The Hermes MCP server (`mcp_serve.py`) runs as a stdio MCP server that Cursor
+and Claude Code connect to automatically via `.cursor/mcp.json`. It provides
+two tool surfaces:
+
+### Messaging Tools (10 tools)
+
+Conversations, messages, events, approvals across connected platforms:
+`conversations_list`, `conversation_get`, `messages_read`,
+`attachments_fetch`, `events_poll`, `events_wait`, `messages_send`,
+`channels_list`, `permissions_list_open`, `permissions_respond`
+
+### Skills & Knowledge Tools (hermes_skills_mcp.py, 7 tools)
+
+Read-only access to the custom Hermes agent fleet, skills, knowledge layer,
+and persistent memory.
+
+| Tool | Purpose |
+|------|---------|
+| `skills_list` | List all agent SOUL.md files and repo skills |
+| `skills_read` | Read a specific SOUL.md or skill document |
+| `agents_list` | List agents with registry data and optional heartbeat |
+| `agents_get` | Full agent detail: registry, SOUL.md, heartbeat, files |
+| `knowledge_read` | Read knowledge layer artifacts (latest_state, ledgers) |
+| `learnings_read` | Read .learnings/ memory files (HOT/WARM/COLD tiers) |
+| `artifacts_list` | Browse the artifacts/ directory tree |
+
+**Key paths** (resolved via HERMES_HOME and HERMES_REPO):
+- `agents/` - Custom agent directories, each with SOUL.md, HEARTBEAT.md
+- `agents/AGENT_REGISTRY.json` - Authoritative agent fleet manifest
+- `artifacts/ops/knowledge_layer/` - Knowledge layer state files
+- `artifacts/ops/held_spec_ledger/` - Held specification tracking
+- `.learnings/memory.md` - HOT-tier persistent memory (100-line cap)
+- `skills/` - Upstream OpenClaw skill categories
+
+### Architecture Notes
+
+- `hermes_skills_mcp.py` is a standalone module imported by `mcp_serve.py`
+- All tools are **read-only** — no mutation of skills, registry, or artifacts
+- Gracefully degrades: if `hermes_skills_mcp` import fails, the messaging
+  tools still work (logged at DEBUG level)
+- Path resolution uses HERMES_HOME/HERMES_REPO env vars, same as the rest
+  of the codebase
+
+## Governance Constraints
+
+**These constraints are active and must not be violated:**
+
+1. **Read-only MCP access.** The skills MCP tools expose Hermes data for
+   reading only. Do not attempt to write to `.learnings/`, `artifacts/`,
+   `agents/AGENT_REGISTRY.json`, or any knowledge layer file through MCP
+   or by circumventing the read-only surface.
+
+2. **No Town-to-Hermes feedback automation.** The Town-Hermes Feedback
+   Protocol is FROZEN until after h20d (May 26, 2026). Do not implement
+   automated memory sync, contradiction-ledger routing, or `.learnings/`
+   write paths. This is a governance decision, not a technical limitation.
+
+3. **Held specifications.** Check the held_spec_ledger before making changes.
+   If a specification is held, do not modify the constrained area without
+   explicit operator approval.
+
+4. **Authority model.** Respect the 5-tier authority model when modifying
+   agent configurations. Most agents are `observe_only` or
+   `observe_and_propose`. Only `crt_resolution_watcher` has `mutate_data`.
+   No agent has `mutate_config` — that is operator-only.
+
+5. **Lane constraints.** Lane A agents (deterministic) must not depend on
+   LLM gateway tokens. Lane B agents use LLM on anomaly only. Lane C
+   agents are manual-only, no cron.
+
+## Recent CI/PR Notes
+
+This branch contains audit fixes around:
+
+- subagent blocked-tool enforcement,
+- `AIAgent.close()` cleanup of shared terminal/background resources,
+- Google Chat plugin platform registration and Pub/Sub handoff,
+- setup-provider config resync,
+- gateway runtime env reload authority,
+- concurrent interrupt test scaffolding.
+
+When touching these areas, rerun the focused tests listed in the PR body before
+committing.

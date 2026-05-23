@@ -5,18 +5,21 @@ Starts a stdio MCP server that lets any MCP client (Claude Code, Cursor, Codex,
 etc.) list conversations, read message history, send messages, poll for live
 events, and manage approval requests across all connected platforms.
 
-Matches OpenClaw's 9-tool MCP channel bridge surface:
+Messaging tools (10) — OpenClaw channel bridge surface plus channels_list:
   conversations_list, conversation_get, messages_read, attachments_fetch,
   events_poll, events_wait, messages_send, permissions_list_open,
-  permissions_respond
+  permissions_respond, channels_list
 
-Plus: channels_list (Hermes-specific extra)
+Optional skills/knowledge tools (8) when hermes_skills_mcp is available:
+  fleet_context_snapshot, skills_list, skills_read, agents_list, agents_get,
+  knowledge_read, learnings_read, artifacts_list
 
 Usage:
     hermes mcp serve
     hermes mcp serve --verbose
+    hermes-mcp-serve          # same; used by .cursor/mcp.json
 
-MCP client config (e.g. claude_desktop_config.json):
+MCP client config (e.g. claude_desktop_config.json or .cursor/mcp.json):
     {
         "mcpServers": {
             "hermes": {
@@ -169,7 +172,7 @@ def _extract_attachments(msg: dict) -> List[dict]:
                 url = part.get("url", part.get("source", {}).get("url", ""))
                 if url:
                     attachments.append({"type": "image", "url": url})
-            elif ptype not in ("text",):
+            elif ptype not in {"text",}:
                 # Unknown non-text content type
                 attachments.append({"type": ptype, "data": part})
 
@@ -356,7 +359,8 @@ class EventBridge:
         except OSError:
             sj_mtime = 0.0
 
-        if sj_mtime != self._sessions_json_mtime:
+        sessions_changed = sj_mtime != self._sessions_json_mtime
+        if sessions_changed:
             self._sessions_json_mtime = sj_mtime
             self._cached_sessions_index = _load_sessions_index()
 
@@ -372,7 +376,8 @@ class EventBridge:
         except OSError:
             db_mtime = 0.0
 
-        if db_mtime == self._state_db_mtime and sj_mtime == self._sessions_json_mtime:
+        db_changed = db_mtime != self._state_db_mtime
+        if not db_changed and not sessions_changed:
             return  # Nothing changed since last poll — skip entirely
 
         self._state_db_mtime = db_mtime
@@ -414,7 +419,7 @@ class EventBridge:
             for msg in messages:
                 ts = _ts_float(msg.get("timestamp", 0))
                 role = msg.get("role", "")
-                if role not in ("user", "assistant"):
+                if role not in {"user", "assistant"}:
                     continue
                 if ts > last_seen:
                     new_messages.append(msg)
@@ -594,7 +599,7 @@ def create_mcp_server(event_bridge: Optional[EventBridge] = None) -> "FastMCP":
         filtered = []
         for msg in all_messages:
             role = msg.get("role", "")
-            if role in ("user", "assistant"):
+            if role in {"user", "assistant"}:
                 content = _extract_message_content(msg)
                 if content:
                     filtered.append({
@@ -847,7 +852,7 @@ def create_mcp_server(event_bridge: Optional[EventBridge] = None) -> "FastMCP":
             id: The approval ID from permissions_list_open
             decision: One of "allow-once", "allow-always", or "deny"
         """
-        if decision not in ("allow-once", "allow-always", "deny"):
+        if decision not in {"allow-once", "allow-always", "deny"}:
             return json.dumps({
                 "error": f"Invalid decision: {decision}. "
                          f"Must be allow-once, allow-always, or deny"
@@ -855,6 +860,19 @@ def create_mcp_server(event_bridge: Optional[EventBridge] = None) -> "FastMCP":
 
         result = bridge.respond_to_approval(id, decision)
         return json.dumps(result, indent=2)
+
+    # -- Skills / Knowledge Layer tools ------------------------------------
+    # Registers: fleet_context_snapshot, skills_list, skills_read,
+    #            agents_list, agents_get, knowledge_read, learnings_read,
+    #            artifacts_list
+    try:
+        from hermes_skills_mcp import register_skills_tools
+        register_skills_tools(mcp)
+        logger.debug("Skills/knowledge MCP tools registered")
+    except ImportError:
+        logger.debug("hermes_skills_mcp not available — skills tools disabled")
+    except Exception as e:
+        logger.warning("Failed to register skills MCP tools: %s", e)
 
     return mcp
 
@@ -895,3 +913,29 @@ def run_mcp_server(verbose: bool = False) -> None:
         asyncio.run(_run())
     except KeyboardInterrupt:
         bridge.stop()
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    """Console-script entry point for MCP clients.
+
+    Keeping this thin wrapper here lets package installs expose a dedicated
+    ``hermes-mcp-serve`` command while preserving ``hermes mcp serve``.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="hermes-mcp-serve",
+        description="Run Hermes as a stdio MCP server.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging on stderr",
+    )
+    args = parser.parse_args(argv)
+    run_mcp_server(verbose=args.verbose)
+
+
+if __name__ == "__main__":
+    main()
