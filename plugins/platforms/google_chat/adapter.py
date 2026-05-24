@@ -594,10 +594,39 @@ class GoogleChatAdapter(BasePlatformAdapter):
             logger.exception("[GoogleChat] Background inbound processing failed")
 
     @staticmethod
+    def _complete_pubsub_dispatch(
+        future: Any,
+        *,
+        on_success: Optional[Any] = None,
+        on_failure: Optional[Any] = None,
+    ) -> None:
+        try:
+            future.result()
+        except Exception:
+            logger.exception("[GoogleChat] Background inbound processing failed")
+            if on_failure is not None:
+                try:
+                    on_failure()
+                except Exception:
+                    logger.debug("[GoogleChat] Pub/Sub nack callback failed", exc_info=True)
+            return
+        if on_success is not None:
+            try:
+                on_success()
+            except Exception:
+                logger.debug("[GoogleChat] Pub/Sub ack callback failed", exc_info=True)
+
+    @staticmethod
     def _loop_accepts_callbacks(loop: Optional[asyncio.AbstractEventLoop]) -> bool:
         return loop is not None and not bool(getattr(loop, "is_closed", lambda: False)())
 
-    def _submit_on_loop(self, coro: Any) -> bool:
+    def _submit_on_loop(
+        self,
+        coro: Any,
+        *,
+        on_success: Optional[Any] = None,
+        on_failure: Optional[Any] = None,
+    ) -> bool:
         """Schedule a coroutine on the adapter loop from a Pub/Sub callback thread."""
         loop = self._loop
         if not self._loop_accepts_callbacks(loop):
@@ -616,7 +645,13 @@ class GoogleChatAdapter(BasePlatformAdapter):
             if close:
                 close()
             return False
-        future.add_done_callback(self._log_background_failure)
+        future.add_done_callback(
+            lambda fut: self._complete_pubsub_dispatch(
+                fut,
+                on_success=on_success,
+                on_failure=on_failure,
+            )
+        )
         return True
 
     # ------------------------------------------------------------------
@@ -1160,18 +1195,23 @@ class GoogleChatAdapter(BasePlatformAdapter):
                 enriched_env["space"] = space
 
             dispatch_coro = self._dispatch_message(msg_with_space, enriched_env)
-            submitted = self._submit_on_loop(dispatch_coro)
-            if submitted:
-                message.ack()
-            else:
+            try:
+                submitted = self._submit_on_loop(
+                    dispatch_coro,
+                    on_success=message.ack,
+                    on_failure=message.nack,
+                )
+            except Exception:
                 close = getattr(dispatch_coro, "close", None)
                 if close:
                     close()
+                raise
+            if not submitted:
                 message.nack()
         except Exception:
             logger.exception("[GoogleChat] Error in _on_pubsub_message")
             try:
-                message.ack()
+                message.nack()
             except Exception:
                 pass
 
@@ -2895,7 +2935,11 @@ def _check_for_registry() -> bool:
 
 def _is_connected(config: PlatformConfig) -> bool:
     """``GatewayConfig.get_connected_platforms()`` polls this."""
-    return bool(getattr(config, "enabled", False)) and _validate_config(config)
+    return (
+        bool(getattr(config, "enabled", False))
+        and check_google_chat_requirements()
+        and _validate_config(config)
+    )
 
 
 def _env_enablement() -> Optional[Dict[str, Any]]:
