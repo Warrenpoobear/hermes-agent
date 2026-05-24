@@ -597,6 +597,7 @@ def build_town_brief() -> dict:
 
     next_actions = [
         "Use town_brief or fleet_context_snapshot(summary=True) at Cursor session start.",
+        "Use learnings_read(file='memory.md') for read-only HOT memory/reference context.",
         "Use agents_get(name) and skills_read(name) before modifying a named agent.",
         "Use knowledge_read('held_spec_ledger') before changing governed specs or pipelines.",
     ]
@@ -626,8 +627,16 @@ def build_town_brief() -> dict:
             "stale_heartbeats": len(snapshot.get("stale_heartbeats") or []),
             "held_spec_flags": snapshot.get("held_spec_flags_count", 0),
             "missing_layers": len(snapshot.get("missing_layers") or []),
+            "memory_files": 1 if snapshot.get("hot_learnings_present") else 0,
         },
         "registry_summary": snapshot.get("registry_summary", {}),
+        "memory": {
+            "read_only": True,
+            "hot_memory_present": bool(snapshot.get("hot_learnings_present")),
+            "hot_memory_path": snapshot.get("hot_learnings_path"),
+            "tool": "learnings_read(file='memory.md')",
+            "note": "Skills/context mode includes read-only .learnings memory/reference reads.",
+        },
         "gateway": {
             "reachable": bool(snapshot.get("gateway_reachable")),
             "skills_context_available": True,
@@ -639,6 +648,7 @@ def build_town_brief() -> dict:
             "town_brief()",
             "agent_health_summary()",
             "fleet_context_snapshot(summary=True)",
+            "learnings_read(file='memory.md')",
             "knowledge_read(artifact='held_spec_ledger')",
         ],
         "next_actions": next_actions,
@@ -702,9 +712,17 @@ def build_town_handoff_bundle(
             "hot": hot_learnings,
             "matches": _matching_lines(str(hot_learnings.get("content") or ""), search_terms),
         },
+        "memory": {
+            "read_only": True,
+            "source": ".learnings",
+            "hot": hot_learnings,
+            "matches": _matching_lines(str(hot_learnings.get("content") or ""), search_terms),
+            "tool": "learnings_read(file='memory.md')",
+        },
         "next_actions": [
             "Treat SOUL.md/IDENTITY/HEARTBEAT as behavioral truth for named-agent work.",
             "Treat AGENT_REGISTRY.json as index/discovery only.",
+            "Use learnings_read(file='memory.md') for read-only HOT memory/reference context.",
             "Check held_spec_ledger and contradiction_ledger before governed edits.",
             "Do not write to .learnings, artifacts, registry, or SOUL files through MCP.",
         ],
@@ -1331,9 +1349,9 @@ def register_skills_tools(mcp) -> None:
     def learnings_read(
         file: str = "memory.md",
     ) -> str:
-        """Read Hermes learnings/memory files.
+        """Read Hermes learnings/memory reference files.
 
-        The .learnings/ directory contains the agent's persistent memory:
+        The .learnings/ directory contains read-only memory/reference files:
           - memory.md: HOT tier memory (loaded every session, 100-line cap)
           - projects/: Per-project/namespace memory files
           - domains/: Per-domain knowledge files

@@ -13,6 +13,7 @@ description: Check whether Hermes MCP is in skills-only or live-ops mode
 
 - `gateway.reachable=true`: live ops tools may be usable.
 - `gateway.reachable=false`: skills/context tools are still healthy if `skills_context_available=true`.
+- Skills/context mode still includes read-only memory/reference reads via `learnings_read(file="memory.md")`.
 - Messaging send/approval tools require a running gateway and active platform sessions.
 
 ## Step 3: Report
@@ -21,6 +22,7 @@ Summarize:
 - MCP mode: `[skills_only/live_ops]`
 - Gateway reachable: `[yes/no]`
 - Skills/context available: `[yes/no]`
+- Memory/reference reads available: `[yes/no]`
 - Live ops caveat: `[what is unavailable]`
 - Next action: `[start gateway / continue offline / investigate sessions]`
 

@@ -19,7 +19,7 @@ arguments:
 
 - Use SOUL.md / IDENTITY / HEARTBEAT as behavioral truth.
 - Use `AGENT_REGISTRY.json` only as index and discovery metadata.
-- Check latest-state, held-spec, contradiction, and learnings matches in the bundle.
+- Check latest-state, held-spec, contradiction, and memory/reference matches in the bundle.
 
 ## Step 3: Report for the receiving agent
 
@@ -28,6 +28,7 @@ Summarize:
 - Behavioral truth path: `[SOUL.md path]`
 - Registry status/lane/authority: `[values]`
 - Heartbeat status: `[fresh/stale/missing]`
+- Memory/reference matches: `[list or none]`
 - Relevant held specs or contradictions: `[list or none]`
 - Safe next action: `[specific action]`
 

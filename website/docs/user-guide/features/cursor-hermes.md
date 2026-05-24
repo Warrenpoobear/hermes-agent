@@ -47,7 +47,7 @@ Hermes MCP is really two products behind one server:
 
 ### Skills / context mode (no gateway)
 
-**Works offline** from disk: custom agents, registry, learnings, knowledge layer, artifacts.
+**Works offline** from disk: custom agents, registry, learnings/memory, knowledge layer, artifacts.
 
 | Tool | Purpose |
 |------|---------|
@@ -61,7 +61,7 @@ Hermes MCP is really two products behind one server:
 | `agents_get` | Registry entry + SOUL + files for one agent |
 | `knowledge_read` | `latest_state`, held specs, operator brief, etc. |
 | `knowledge_query` | Bounded deterministic keyword query over knowledge graph artifacts |
-| `learnings_read` | `.learnings/memory.md` and namespaces |
+| `learnings_read` | Read-only `.learnings/memory.md` memory/reference and namespaces |
 | `artifacts_list` | Browse `artifacts/` tree |
 
 Use this mode for: editing agents, pipeline code, audits, PRs, and Cursor Cloud sessions that only need fleet cognition.
@@ -71,10 +71,14 @@ For a concise session start, call `town_brief()` first. Use
 bootstrap data without text blobs, and use the full snapshot only when a task
 needs learnings or latest-state excerpts.
 
+Skills/context mode still includes read-only memory/reference access through
+`learnings_read(file="memory.md")`; it only lacks gateway-backed live messaging
+and approvals.
+
 For handoffs between Cursor agents, call `town_handoff_bundle(agent_name=...,
 spec_id=...)` to collect bounded SOUL, registry, heartbeat, latest-state,
-held-spec, contradiction, and HOT learnings context without mutating fleet
-state.
+held-spec, contradiction, and HOT `.learnings/memory.md` context without
+mutating fleet state.
 
 ### Live ops / gateway mode
 
