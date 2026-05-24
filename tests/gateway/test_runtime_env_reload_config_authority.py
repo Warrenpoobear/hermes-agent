@@ -109,3 +109,24 @@ def test_reload_runtime_env_keeps_env_max_iterations_when_config_omits_key(
     gateway_run._reload_runtime_env_preserving_config_authority()
 
     assert os.environ["HERMES_MAX_ITERATIONS"] == "123"
+
+
+def test_reload_runtime_env_restores_authoritative_values_on_bad_config(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hermes_home = tmp_path / ".hermes"
+    hermes_home.mkdir()
+    (hermes_home / "config.yaml").write_text("agent: [unterminated\n", encoding="utf-8")
+    (hermes_home / ".env").write_text(
+        "HERMES_MAX_ITERATIONS=90\nHERMES_AGENT_TIMEOUT=60\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(gateway_run, "_hermes_home", hermes_home)
+    monkeypatch.setenv("HERMES_MAX_ITERATIONS", "9000")
+    monkeypatch.setenv("HERMES_AGENT_TIMEOUT", "1800")
+
+    gateway_run._reload_runtime_env_preserving_config_authority()
+
+    assert os.environ["HERMES_MAX_ITERATIONS"] == "9000"
+    assert os.environ["HERMES_AGENT_TIMEOUT"] == "1800"

@@ -895,6 +895,43 @@ async def test_drain_timeout_only_marks_still_running_sessions():
 
 
 @pytest.mark.asyncio
+async def test_drain_timeout_failure_count_only_hits_still_running_sessions():
+    """Stuck-loop counters mirror resume_pending marking: sessions that
+    finish during the drain window must not get penalized as restart failures.
+    """
+    runner, adapter = make_restart_runner()
+    adapter.disconnect = AsyncMock()
+    runner._restart_drain_timeout = 0.3
+
+    session_key_finisher = "agent:main:telegram:dm:A"
+    session_key_stuck = "agent:main:telegram:dm:B"
+    runner._running_agents = {
+        session_key_finisher: MagicMock(),
+        session_key_stuck: MagicMock(),
+    }
+    runner._increment_restart_failure_counts = MagicMock()
+
+    async def finish_one():
+        await asyncio.sleep(0.05)
+        runner._running_agents.pop(session_key_finisher, None)
+
+    asyncio.create_task(finish_one())
+
+    session_store = MagicMock()
+    session_store.mark_resume_pending = MagicMock(return_value=True)
+    runner.session_store = session_store
+
+    with patch("gateway.status.remove_pid_file"), patch(
+        "gateway.status.write_runtime_status"
+    ):
+        await runner.stop()
+
+    runner._increment_restart_failure_counts.assert_called_once_with(
+        {session_key_stuck}
+    )
+
+
+@pytest.mark.asyncio
 async def test_drain_timeout_skips_pending_sentinel_sessions():
     """Pending sentinels — sessions whose AIAgent construction hasn't
     produced a real agent yet — are skipped by
