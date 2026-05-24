@@ -114,13 +114,11 @@ class TestAgentCloseMethod:
                  patch("run_agent.cleanup_browser") as mock_cleanup_browser:
                 agent.close()
 
-                assert mock_registry.kill_all.call_count == 2
-                mock_registry.kill_all.assert_any_call(task_id="test-close-cleanup")
-                mock_registry.kill_all.assert_any_call(task_id="default")
+                mock_registry.kill_all.assert_called_once_with(
+                    task_id="test-close-cleanup"
+                )
                 mock_cleanup_vm.assert_any_call("test-close-cleanup")
-                mock_cleanup_vm.assert_any_call("default")
                 mock_cleanup_browser.assert_any_call("test-close-cleanup")
-                mock_cleanup_browser.assert_any_call("default")
 
     def test_close_is_idempotent(self):
         """close() can be called multiple times without error."""
@@ -183,9 +181,7 @@ class TestAgentCloseMethod:
                 agent.close()
 
                 mock_vm.assert_any_call("test-close-partial")
-                mock_vm.assert_any_call("default")
                 mock_browser.assert_any_call("test-close-partial")
-                mock_browser.assert_any_call("default")
 
 
 class TestGatewayCleanupWiring:

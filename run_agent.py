@@ -5003,7 +5003,7 @@ class AIAgent:
         except Exception:
             pass
 
-    def close(self) -> None:
+    def close(self, *, cleanup_shared_default: bool = False) -> None:
         """Release all resources held by this agent instance.
 
         Cleans up subprocess resources that would otherwise become orphans:
@@ -5015,6 +5015,9 @@ class AIAgent:
 
         Safe to call multiple times (idempotent).  Each cleanup step is
         independently guarded so a failure in one does not prevent the rest.
+        Shared ``default`` terminal/browser/process state is intentionally
+        skipped unless ``cleanup_shared_default`` is True; ordinary session
+        cleanup must not destroy resources owned by unrelated sessions.
         """
         primary_task_id = getattr(self, "session_id", None) or ""
         current_task_id = getattr(self, "_current_task_id", None) or ""
@@ -5027,6 +5030,15 @@ class AIAgent:
 
             for candidate in list(cleanup_task_ids):
                 resolved = _resolve_container_task_id(candidate)
+                if resolved == "default" and not cleanup_shared_default:
+                    logger.debug(
+                        "Suppressing shared default cleanup for agent close "
+                        "(session_id=%s current_task_id=%s); pass "
+                        "cleanup_shared_default=True for gateway shutdown",
+                        primary_task_id or "",
+                        current_task_id or "",
+                    )
+                    continue
                 if resolved and resolved not in cleanup_task_ids:
                     cleanup_task_ids.append(resolved)
         except Exception:
@@ -5077,6 +5089,10 @@ class AIAgent:
                 self.client = None
         except Exception:
             pass
+
+    def close_for_gateway_shutdown(self) -> None:
+        """Release this agent plus shared default resources during gateway shutdown."""
+        self.close(cleanup_shared_default=True)
 
     def _hydrate_todo_store(self, history: List[Dict[str, Any]]) -> None:
         """

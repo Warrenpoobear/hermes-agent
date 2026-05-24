@@ -2719,9 +2719,14 @@ class GatewayRunner:
                 )
             except Exception:
                 pass
-            self._cleanup_agent_resources(agent)
+            self._cleanup_agent_resources(agent, cleanup_shared_default=True)
 
-    def _cleanup_agent_resources(self, agent: Any) -> None:
+    def _cleanup_agent_resources(
+        self,
+        agent: Any,
+        *,
+        cleanup_shared_default: bool = False,
+    ) -> None:
         """Best-effort cleanup for temporary or cached agent instances."""
         if agent is None:
             return
@@ -2749,7 +2754,7 @@ class GatewayRunner:
         # process accumulation.
         try:
             if hasattr(agent, "close"):
-                agent.close()
+                agent.close(cleanup_shared_default=cleanup_shared_default)
         except Exception:
             pass
         # Auxiliary async clients (session_search/web/vision/etc.) live in a
@@ -4359,7 +4364,10 @@ class GatewayRunner:
                     _agent = (
                         _entry[0] if isinstance(_entry, tuple) else _entry
                     )
-                    self._cleanup_agent_resources(_agent)
+                    self._cleanup_agent_resources(
+                        _agent,
+                        cleanup_shared_default=True,
+                    )
 
             for platform, adapter in list(self.adapters.items()):
                 try:
