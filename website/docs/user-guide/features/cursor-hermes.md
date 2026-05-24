@@ -54,6 +54,7 @@ Hermes MCP is really two products behind one server:
 | `fleet_context_snapshot` | One-call bounded fleet bootstrap for IDEs |
 | `agent_health_summary` | Compact actionable health anomalies without the full registry dump |
 | `town_brief` | Human-facing Town/Cursor status, source-of-truth paths, and next MCP calls |
+| `town_handoff_bundle` | Bounded agent/spec context package for Cursor handoffs |
 | `skills_list` | Agent SOUL.md dirs + repo `skills/` catalog |
 | `skills_read` | Read SOUL.md or skill files |
 | `agents_list` | Registry + optional heartbeat files |
@@ -69,6 +70,11 @@ For a concise session start, call `town_brief()` first. Use
 `fleet_context_snapshot(summary=True)` when the agent needs structured
 bootstrap data without text blobs, and use the full snapshot only when a task
 needs learnings or latest-state excerpts.
+
+For handoffs between Cursor agents, call `town_handoff_bundle(agent_name=...,
+spec_id=...)` to collect bounded SOUL, registry, heartbeat, latest-state,
+held-spec, contradiction, and HOT learnings context without mutating fleet
+state.
 
 ### Live ops / gateway mode
 
@@ -130,5 +136,5 @@ A common mature layout:
 
 | Item | Benefit |
 |------|---------|
-| Spec-aware edit guards | Prevents governed edits without held-spec and contradiction context |
+| Spec-aware automatic edit guards | Prevents governed edits without held-spec and contradiction context |
 | Agent dependency graph | Shows Lane A/B/C, pipeline dependencies, and stale heartbeat impact |
