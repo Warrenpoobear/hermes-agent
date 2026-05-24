@@ -13,10 +13,14 @@ read-only tools that let MCP clients discover and read:
   - Skill documents from the repo skills/ directory
   - Cron schedule configuration
 
-All paths resolve via HERMES_HOME and HERMES_REPO environment variables,
-following the same conventions as the existing mcp_serve.py.
+Paths resolve via HERMES_AGENTS_DIR (runtime fleet), then HERMES_REPO,
+then HERMES_HOME — same profile conventions as mcp_serve.py.
 
-Tool surface (7 tools):
+Tool surface (11 tools; read-only by design):
+  fleet_context_snapshot — one-call bounded fleet bootstrap for IDEs
+  agent_health_summary — compact actionable fleet health anomalies
+  town_brief — human-facing Cursor/Town integration brief
+  knowledge_query — bounded keyword query over knowledge graph artifacts
   skills_list          — list available agent SOUL.md files and repo skills
   skills_read          — read a specific skill/SOUL.md document
   agents_list          — list agents from registry with status summary
@@ -36,6 +40,24 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 logger = logging.getLogger("hermes.mcp_skills")
+
+_SNAPSHOT_TEXT_CAP = 4_000
+_SNAPSHOT_LIST_CAP = 25
+_HEARTBEAT_STALE_SECONDS = 24 * 60 * 60
+# Bump this version when the documented authority hierarchy changes.
+# It is an API contract marker for MCP clients, not derived from docs.
+_SOURCE_OF_TRUTH_HIERARCHY = {
+    "version": "2026-05-22.cursor-hermes.v1",
+    "reference": "website/docs/user-guide/features/cursor-hermes.md#source-of-truth-hierarchy",
+    "layers": [
+        {"layer": "runtime_wrappers_scripts", "authority": "execution_truth"},
+        {"layer": "SOUL_IDENTITY_HEARTBEAT", "authority": "behavioral_truth"},
+        {"layer": "AGENT_REGISTRY.json", "authority": "index_discovery_only"},
+        {"layer": "knowledge_layer", "authority": "operational_state"},
+        {"layer": ".learnings", "authority": "memory_reference"},
+        {"layer": "CLAUDE.md_cursor_rules", "authority": "operator_workflow_constraints"},
+    ],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -95,6 +117,29 @@ def _file_mtime_iso(path: Path) -> str:
         return ""
 
 
+def _display_path(path: Path) -> str:
+    """Return a repo-relative path when possible, otherwise an absolute path."""
+    try:
+        return str(path.relative_to(_get_hermes_repo()))
+    except ValueError:
+        return str(path)
+
+
+def _safe_child_path(root: Path, *parts: str) -> Optional[Path]:
+    """Resolve a user-supplied child path without escaping ``root``."""
+    try:
+        for part in parts:
+            if Path(str(part)).is_absolute():
+                return None
+        base = root.resolve()
+        candidate = base.joinpath(*(str(part) for part in parts)).resolve()
+        if not candidate.is_relative_to(base):
+            return None
+        return candidate
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+
 def _dir_listing(path: Path, max_depth: int = 2, _depth: int = 0) -> List[dict]:
     """Recursively list a directory up to max_depth."""
     if not path.is_dir() or _depth > max_depth:
@@ -107,7 +152,7 @@ def _dir_listing(path: Path, max_depth: int = 2, _depth: int = 0) -> List[dict]:
             entry: dict = {
                 "name": item.name,
                 "type": "directory" if item.is_dir() else "file",
-                "path": str(item.relative_to(_get_hermes_repo())),
+                "path": _display_path(item),
             }
             if item.is_file():
                 try:
@@ -130,8 +175,15 @@ def _dir_listing(path: Path, max_depth: int = 2, _depth: int = 0) -> List[dict]:
 def _find_agents_dir() -> Optional[Path]:
     """Find the custom agents/ directory (local clone, not upstream repo).
 
-    Checks HERMES_REPO/agents/ first, then HERMES_HOME/hermes-agent/agents/.
+    Checks HERMES_AGENTS_DIR env var first (explicit override), then
+    HERMES_REPO/agents/, then HERMES_HOME/hermes-agent/agents/.
     """
+    explicit = os.environ.get("HERMES_AGENTS_DIR")
+    if explicit:
+        p = Path(explicit)
+        if p.is_dir():
+            return p
+
     repo = _get_hermes_repo()
     candidates = [
         repo / "agents",
@@ -168,12 +220,410 @@ def _load_agent_registry() -> dict:
         return {}
 
 
+def _registry_agents(registry: dict) -> dict:
+    """Return the agent mapping from supported registry shapes."""
+    if isinstance(registry.get("agents"), dict):
+        return registry["agents"]
+    return registry
+
+
+def _count_by_field(entries: dict, field: str) -> dict:
+    counts: dict[str, int] = {}
+    for meta in entries.values():
+        if not isinstance(meta, dict):
+            continue
+        value = str(meta.get(field) or "unknown")
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _bounded_read(path: Optional[Path], *, max_chars: int = _SNAPSHOT_TEXT_CAP) -> dict:
+    """Read a file without exceeding the snapshot character budget."""
+    if not path or not path.exists() or not path.is_file():
+        return {"present": False, "path": str(path) if path else None, "content": ""}
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:
+        return {"present": False, "path": str(path), "error": str(exc), "content": ""}
+    truncated = len(content) > max_chars
+    return {
+        "present": True,
+        "path": str(path),
+        "modified": _file_mtime_iso(path),
+        "truncated": truncated,
+        "content": content[:max_chars],
+    }
+
+
+def _find_latest_state_path() -> Optional[Path]:
+    artifacts_dir = _get_artifacts_dir()
+    if not artifacts_dir:
+        return None
+    for suffix in ("md", "json"):
+        path = artifacts_dir / "ops" / "knowledge_layer" / f"latest_state.{suffix}"
+        if path.exists():
+            return path
+    return None
+
+
+def _find_held_spec_ledger_path() -> Optional[Path]:
+    artifacts_dir = _get_artifacts_dir()
+    if not artifacts_dir:
+        return None
+    for suffix in ("md", "json"):
+        path = artifacts_dir / "ops" / "held_spec_ledger" / f"latest.{suffix}"
+        if path.exists():
+            return path
+    return None
+
+
+def _extract_held_spec_flags(content: str) -> list[str]:
+    """Return a bounded list of held-spec lines that look operationally active."""
+    flags: list[str] = []
+    markers = ("held", "hold", "blocked", "frozen", "active", "must", "cannot")
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        lowered = line.lower()
+        if any(marker in lowered for marker in markers):
+            flags.append(line[:240])
+        if len(flags) >= _SNAPSHOT_LIST_CAP:
+            break
+    return flags
+
+
+def _gateway_reachable() -> bool:
+    """Best-effort read-only probe for live gateway availability."""
+    try:
+        from gateway.status import is_gateway_running
+
+        return bool(is_gateway_running(cleanup_stale=False))
+    except Exception as exc:
+        logger.debug("Gateway reachability probe failed: %s", exc)
+        return False
+
+
+def _source_of_truth_label(agents_dir: Optional[Path]) -> Optional[str]:
+    """Return the authority layer that supplied the agent documents."""
+    if agents_dir is None:
+        return None
+    explicit = os.environ.get("HERMES_AGENTS_DIR")
+    if explicit and agents_dir == Path(explicit):
+        return "HERMES_AGENTS_DIR"
+    repo_agents = _get_hermes_repo() / "agents"
+    if agents_dir == repo_agents:
+        return "HERMES_REPO/agents"
+    home_agents = _get_hermes_home() / "hermes-agent" / "agents"
+    if agents_dir == home_agents:
+        return "HERMES_HOME/hermes-agent/agents"
+    return str(agents_dir)
+
+
+def build_fleet_context_snapshot(*, summary: bool = False) -> dict:
+    """Build a bounded, read-only fleet bootstrap snapshot for MCP clients.
+
+    Args:
+        summary: If True, return a compressed payload that omits text blobs
+                 (hot_learnings content, latest_state content, held_spec raw content)
+                 and returns only structured metadata, counts, and flags.
+                 Reduces token consumption by ~60-80% for IDE sessions that only
+                 need state awareness without full text context.
+    """
+    hermes_home = _get_hermes_home()
+    hermes_repo = _get_hermes_repo()
+    agents_dir = _find_agents_dir()
+    registry_path = _find_agent_registry()
+    registry = _load_agent_registry()
+    registry_entries = _registry_agents(registry)
+    warnings: list[str] = []
+    missing_layers: list[str] = []
+
+    explicit_agents_dir = os.environ.get("HERMES_AGENTS_DIR")
+    if explicit_agents_dir and not Path(explicit_agents_dir).is_dir():
+        warnings.append(f"HERMES_AGENTS_DIR does not exist: {explicit_agents_dir}")
+
+    if not agents_dir:
+        missing_layers.append("agents_dir")
+        warnings.append("No agents directory found; checked HERMES_AGENTS_DIR, HERMES_REPO/agents, and HERMES_HOME/hermes-agent/agents.")
+    if not registry_path:
+        missing_layers.append("registry")
+        warnings.append("AGENT_REGISTRY.json not found.")
+
+    registry_summary = {
+        "path": str(registry_path) if registry_path else None,
+        "agents": sorted(registry_entries.keys())[:_SNAPSHOT_LIST_CAP],
+        "agents_truncated": len(registry_entries) > _SNAPSHOT_LIST_CAP,
+        "by_status": _count_by_field(registry_entries, "status"),
+        "by_lane": _count_by_field(registry_entries, "lane"),
+        "by_authority": _count_by_field(registry_entries, "authority"),
+    }
+
+    stale_heartbeats: list[dict] = []
+    now = datetime.now(timezone.utc).timestamp()
+    if agents_dir and registry_entries:
+        for agent_name in sorted(registry_entries.keys()):
+            heartbeat = agents_dir / agent_name / "HEARTBEAT.md"
+            if not heartbeat.exists():
+                stale_heartbeats.append({"agent": agent_name, "status": "missing"})
+            else:
+                try:
+                    age_seconds = max(0.0, now - heartbeat.stat().st_mtime)
+                    if age_seconds > _HEARTBEAT_STALE_SECONDS:
+                        stale_heartbeats.append({
+                            "agent": agent_name,
+                            "status": "stale",
+                            "age_hours": round(age_seconds / 3600, 1),
+                            "path": str(heartbeat),
+                            "modified": _file_mtime_iso(heartbeat),
+                        })
+                except OSError as exc:
+                    stale_heartbeats.append({"agent": agent_name, "status": "unreadable", "error": str(exc)})
+
+    stale_truncated = len(stale_heartbeats) > _SNAPSHOT_LIST_CAP
+    if stale_truncated:
+        warnings.append(f"stale_heartbeats truncated at {_SNAPSHOT_LIST_CAP} entries.")
+    stale_heartbeats = stale_heartbeats[:_SNAPSHOT_LIST_CAP]
+
+    learnings_dir = _get_learnings_dir()
+    hot_path = learnings_dir / "memory.md" if learnings_dir else None
+    if summary:
+        # Summary mode: check presence only, skip content reads
+        hot_present = bool(hot_path and hot_path.exists())
+        if not hot_present:
+            missing_layers.append("hot_learnings")
+        latest_state_path = _find_latest_state_path()
+        latest_state_present = bool(latest_state_path and latest_state_path.exists())
+        if not latest_state_present:
+            missing_layers.append("latest_state")
+        held_ledger_path = _find_held_spec_ledger_path()
+        held_ledger_present = bool(held_ledger_path and held_ledger_path.exists())
+        if not held_ledger_present:
+            missing_layers.append("held_spec_ledger")
+        # Extract flag count from held ledger without full content read
+        held_spec_flags: list[str] = []
+        if held_ledger_present and held_ledger_path:
+            try:
+                content = held_ledger_path.read_text(encoding="utf-8", errors="replace")
+                held_spec_flags = _extract_held_spec_flags(content)
+            except Exception:
+                pass
+    else:
+        hot = _bounded_read(hot_path)
+        if not hot["present"]:
+            missing_layers.append("hot_learnings")
+
+        latest_state = _bounded_read(_find_latest_state_path())
+        if not latest_state["present"]:
+            missing_layers.append("latest_state")
+
+        held_ledger = _bounded_read(_find_held_spec_ledger_path())
+        held_spec_flags = _extract_held_spec_flags(str(held_ledger.get("content") or "")) if held_ledger["present"] else []
+        if not held_ledger["present"]:
+            missing_layers.append("held_spec_ledger")
+
+    gateway = _gateway_reachable()
+    source_of_truth = _source_of_truth_label(agents_dir)
+
+    if summary:
+        # Compressed output: structured metadata only, no text blobs
+        return {
+            "format": "summary",
+            "mode": "live_ops" if gateway else "skills_only",
+            "writes_allowed": False,
+            "source_of_truth": source_of_truth,
+            "gateway_reachable": gateway,
+            "hermes_home": str(hermes_home),
+            "hermes_repo": str(hermes_repo),
+            "agents_dir": str(agents_dir) if agents_dir else None,
+            "registry_present": bool(registry_path),
+            "agent_count": len(registry_entries),
+            "registry_summary": registry_summary,
+            "stale_heartbeats": stale_heartbeats,
+            "hot_learnings_present": hot_present,
+            "hot_learnings_path": str(hot_path) if hot_path else None,
+            "latest_state_present": latest_state_present,
+            "latest_state_path": str(latest_state_path) if latest_state_path else None,
+            "held_spec_flags_count": len(held_spec_flags),
+            "held_spec_flags": held_spec_flags[:10],
+            "missing_layers": sorted(set(missing_layers)),
+            "warnings": warnings,
+        }
+
+    return {
+        "mode": "live_ops" if gateway else "skills_only",
+        "writes_allowed": False,
+        "source_of_truth": source_of_truth,
+        "authority_boundary": {
+            "mode": "live_ops" if gateway else "skills_only",
+            "writes_allowed": False,
+            "source_of_truth": source_of_truth,
+            "gateway_reachable": gateway,
+        },
+        "hermes_home": str(hermes_home),
+        "hermes_repo": str(hermes_repo),
+        "agents_dir": str(agents_dir) if agents_dir else None,
+        "registry_present": bool(registry_path),
+        "agent_count": len(registry_entries),
+        "registry_summary": registry_summary,
+        "stale_heartbeats": stale_heartbeats,
+        "hot_learnings_excerpt": hot,
+        "latest_state_digest": latest_state,
+        "held_spec_flags": held_spec_flags,
+        "gateway_reachable": gateway,
+        "missing_layers": sorted(set(missing_layers)),
+        "warnings": warnings,
+        "source_of_truth_hierarchy": _SOURCE_OF_TRUTH_HIERARCHY,
+    }
+
+
+def build_agent_health_summary() -> dict:
+    """Build a compact, actionable, read-only fleet health summary."""
+    snapshot = build_fleet_context_snapshot()
+    stale_heartbeats = list(snapshot.get("stale_heartbeats") or [])
+    missing_layers = list(snapshot.get("missing_layers") or [])
+    warnings = list(snapshot.get("warnings") or [])
+    held_flags = list(snapshot.get("held_spec_flags") or [])
+
+    anomaly_count = (
+        len(stale_heartbeats)
+        + len(missing_layers)
+        + len(warnings)
+        + len(held_flags)
+        + (0 if snapshot.get("registry_present") else 1)
+    )
+
+    return {
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "status": "attention" if anomaly_count else "ok",
+        "mode": snapshot.get("mode"),
+        "gateway_reachable": bool(snapshot.get("gateway_reachable")),
+        "writes_allowed": False,
+        "source_of_truth": snapshot.get("source_of_truth"),
+        "agents_dir": snapshot.get("agents_dir"),
+        "registry_present": bool(snapshot.get("registry_present")),
+        "agent_count": int(snapshot.get("agent_count") or 0),
+        "stale_heartbeats": stale_heartbeats[:_SNAPSHOT_LIST_CAP],
+        "stale_heartbeats_truncated": len(stale_heartbeats) > _SNAPSHOT_LIST_CAP,
+        "missing_layers": missing_layers,
+        "held_spec_flags_count": len(held_flags),
+        "held_spec_flags_sample": held_flags[:10],
+        "warnings": warnings[:_SNAPSHOT_LIST_CAP],
+        "warning_count": len(warnings),
+        "next_action": (
+            "Review stale/missing layers before changing governed code."
+            if anomaly_count else
+            "No actionable fleet health anomalies in local MCP snapshot."
+        ),
+    }
+
+
+def build_town_brief() -> dict:
+    """Build a concise, read-only Town/Cursor operational brief."""
+    snapshot = build_fleet_context_snapshot(summary=True)
+    health = build_agent_health_summary()
+
+    active_issues: list[dict] = []
+    if not snapshot.get("registry_present"):
+        active_issues.append({
+            "kind": "missing_registry",
+            "severity": "warning",
+            "detail": "AGENT_REGISTRY.json was not found.",
+        })
+    for layer in snapshot.get("missing_layers") or []:
+        active_issues.append({
+            "kind": "missing_layer",
+            "severity": "warning",
+            "detail": layer,
+        })
+    for heartbeat in snapshot.get("stale_heartbeats") or []:
+        active_issues.append({
+            "kind": "heartbeat",
+            "severity": "attention",
+            "detail": heartbeat,
+        })
+    for warning in snapshot.get("warnings") or []:
+        active_issues.append({
+            "kind": "warning",
+            "severity": "warning",
+            "detail": warning,
+        })
+
+    held_flags = snapshot.get("held_spec_flags") or []
+    if held_flags:
+        active_issues.append({
+            "kind": "held_specs",
+            "severity": "governance",
+            "detail": {
+                "count": snapshot.get("held_spec_flags_count", len(held_flags)),
+                "sample": held_flags[:10],
+            },
+        })
+
+    status = "ok"
+    if active_issues:
+        status = "attention"
+    if any(issue["kind"] in {"missing_registry", "missing_layer"} for issue in active_issues):
+        status = "degraded"
+
+    next_actions = [
+        "Use town_brief or fleet_context_snapshot(summary=True) at Cursor session start.",
+        "Use agents_get(name) and skills_read(name) before modifying a named agent.",
+        "Use knowledge_read('held_spec_ledger') before changing governed specs or pipelines.",
+    ]
+    if not snapshot.get("gateway_reachable"):
+        next_actions.append(
+            "Gateway is unavailable; skills/context MCP tools can still be used, "
+            "but live messaging tools require a running gateway."
+        )
+    if active_issues:
+        next_actions.insert(0, health.get("next_action") or "Review active Town issues.")
+
+    return {
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "mode": snapshot.get("mode"),
+        "writes_allowed": False,
+        "source_of_truth": snapshot.get("source_of_truth"),
+        "paths": {
+            "hermes_home": snapshot.get("hermes_home"),
+            "hermes_repo": snapshot.get("hermes_repo"),
+            "agents_dir": snapshot.get("agents_dir"),
+            "latest_state": snapshot.get("latest_state_path"),
+            "hot_learnings": snapshot.get("hot_learnings_path"),
+        },
+        "counts": {
+            "agents": snapshot.get("agent_count", 0),
+            "stale_heartbeats": len(snapshot.get("stale_heartbeats") or []),
+            "held_spec_flags": snapshot.get("held_spec_flags_count", 0),
+            "missing_layers": len(snapshot.get("missing_layers") or []),
+        },
+        "registry_summary": snapshot.get("registry_summary", {}),
+        "gateway": {
+            "reachable": bool(snapshot.get("gateway_reachable")),
+            "skills_context_available": True,
+            "live_ops_requires_gateway": True,
+        },
+        "active_issues": active_issues[:_SNAPSHOT_LIST_CAP],
+        "active_issues_truncated": len(active_issues) > _SNAPSHOT_LIST_CAP,
+        "recommended_cursor_calls": [
+            "town_brief()",
+            "agent_health_summary()",
+            "fleet_context_snapshot(summary=True)",
+            "knowledge_read(artifact='held_spec_ledger')",
+        ],
+        "next_actions": next_actions,
+    }
+
+
 def _find_heartbeat(agent_name: str) -> Optional[dict]:
     """Find and parse an agent's HEARTBEAT.md for status info."""
     agents_dir = _find_agents_dir()
     if not agents_dir:
         return None
-    heartbeat = agents_dir / agent_name / "HEARTBEAT.md"
+    heartbeat = _safe_child_path(agents_dir, agent_name, "HEARTBEAT.md")
+    if not heartbeat:
+        return None
     if not heartbeat.exists():
         return None
     try:
@@ -192,7 +642,9 @@ def _find_soul_md(agent_name: str) -> Optional[Path]:
     agents_dir = _find_agents_dir()
     if not agents_dir:
         return None
-    soul = agents_dir / agent_name / "SOUL.md"
+    soul = _safe_child_path(agents_dir, agent_name, "SOUL.md")
+    if not soul:
+        return None
     if soul.exists():
         return soul
     return None
@@ -236,6 +688,16 @@ def _get_learnings_dir() -> Optional[Path]:
     for c in candidates:
         if c.is_dir():
             return c
+    return None
+
+
+def _get_knowledge_graph_dir() -> Optional[Path]:
+    """Find artifacts/ops/knowledge_graph/."""
+    artifacts = _get_artifacts_dir()
+    if artifacts:
+        kg = artifacts / "ops" / "knowledge_graph"
+        if kg.is_dir():
+            return kg
     return None
 
 
@@ -323,6 +785,50 @@ def register_skills_tools(mcp) -> None:
         register_skills_tools(mcp)
     """
 
+    # -- fleet_context_snapshot -------------------------------------------
+
+    @mcp.tool()
+    def fleet_context_snapshot(
+        summary: bool = False,
+    ) -> str:
+        """Return a bounded, read-only fleet bootstrap snapshot for IDE clients.
+
+        The snapshot works in skills/context mode even when the live gateway is
+        down. It never writes files and reports missing layers explicitly so
+        Cursor can continue with partial but trustworthy context.
+
+        Args:
+            summary: If True, return compressed output that omits text blobs
+                     (learnings content, latest_state content, held_spec raw text)
+                     and returns only structured metadata, counts, and flags.
+                     Reduces token consumption by ~60-80% for sessions that only
+                     need state awareness without full text context.
+        """
+        return json.dumps(build_fleet_context_snapshot(summary=summary), indent=2)
+
+    # -- agent_health_summary ---------------------------------------------
+
+    @mcp.tool()
+    def agent_health_summary() -> str:
+        """Return compact actionable fleet health anomalies.
+
+        Use this when a Cursor session needs a fast "is anything broken?"
+        answer instead of the full fleet context snapshot. Read-only.
+        """
+        return json.dumps(build_agent_health_summary(), indent=2)
+
+    # -- town_brief ---------------------------------------------------------
+
+    @mcp.tool()
+    def town_brief() -> str:
+        """Return a concise Cursor/Town operational brief.
+
+        This is a human-facing summary of the read-only fleet context:
+        source-of-truth paths, health counts, held-spec flags, gateway mode,
+        and recommended next MCP calls for Cursor agents.
+        """
+        return json.dumps(build_town_brief(), indent=2)
+
     # -- skills_list -------------------------------------------------------
 
     @mcp.tool()
@@ -352,7 +858,7 @@ def register_skills_tools(mcp) -> None:
                     entry: dict = {
                         "agent": agent_dir.name,
                         "has_soul_md": soul.exists(),
-                        "path": str(agent_dir.relative_to(_get_hermes_repo())),
+                        "path": _display_path(agent_dir),
                     }
                     if soul.exists():
                         entry["soul_md_modified"] = _file_mtime_iso(soul)
@@ -398,7 +904,9 @@ def register_skills_tools(mcp) -> None:
         # Try custom agent first
         agents_dir = _find_agents_dir()
         if agents_dir:
-            agent_path = agents_dir / name / file
+            agent_path = _safe_child_path(agents_dir, name, file)
+            if agent_path is None:
+                return json.dumps({"error": "Invalid agent path"}, indent=2)
             if agent_path.exists():
                 content = _safe_read(agent_path)
                 return json.dumps({
@@ -414,7 +922,9 @@ def register_skills_tools(mcp) -> None:
         skills_dir = _get_repo_skills_dir()
         if skills_dir:
             # Direct path
-            skill_path = skills_dir / name / file
+            skill_path = _safe_child_path(skills_dir, name, file)
+            if skill_path is None:
+                return json.dumps({"error": "Invalid skill path"}, indent=2)
             if skill_path.exists():
                 content = _safe_read(skill_path)
                 return json.dumps({
@@ -429,7 +939,9 @@ def register_skills_tools(mcp) -> None:
             for category in skills_dir.iterdir():
                 if not category.is_dir():
                     continue
-                candidate = category / name / file
+                candidate = _safe_child_path(category, name, file)
+                if candidate is None:
+                    continue
                 if candidate.exists():
                     content = _safe_read(candidate)
                     return json.dumps({
@@ -464,7 +976,7 @@ def register_skills_tools(mcp) -> None:
             include_heartbeat: Include HEARTBEAT.md content for each agent
                                (default false — set true for health check)
         """
-        registry = _load_agent_registry()
+        registry = _registry_agents(_load_agent_registry())
         agents_dir = _find_agents_dir()
 
         agents = []
@@ -524,7 +1036,7 @@ def register_skills_tools(mcp) -> None:
         result: dict = {"name": name}
 
         # Registry entry
-        registry = _load_agent_registry()
+        registry = _registry_agents(_load_agent_registry())
         if name in registry:
             result["registry"] = registry[name]
 
@@ -545,8 +1057,8 @@ def register_skills_tools(mcp) -> None:
         # Agent directory listing
         agents_dir = _find_agents_dir()
         if agents_dir:
-            agent_dir = agents_dir / name
-            if agent_dir.is_dir():
+            agent_dir = _safe_child_path(agents_dir, name)
+            if agent_dir and agent_dir.is_dir():
                 result["files"] = []
                 for item in sorted(agent_dir.iterdir()):
                     if item.name.startswith("."):
@@ -665,7 +1177,9 @@ def register_skills_tools(mcp) -> None:
                 ],
             }, indent=2)
 
-        target = learnings_dir / file
+        target = _safe_child_path(learnings_dir, file)
+        if target is None:
+            return json.dumps({"error": "Invalid learnings path"}, indent=2)
 
         # If requesting a directory, list it
         if target.is_dir():
@@ -725,7 +1239,9 @@ def register_skills_tools(mcp) -> None:
                 "error": "Artifacts directory not found",
             }, indent=2)
 
-        target = artifacts_dir / path if path else artifacts_dir
+        target = _safe_child_path(artifacts_dir, path) if path else artifacts_dir.resolve()
+        if target is None:
+            return json.dumps({"error": "Invalid artifacts path"}, indent=2)
         if not target.is_dir():
             return json.dumps({
                 "error": f"Directory not found: {target}",
@@ -735,9 +1251,107 @@ def register_skills_tools(mcp) -> None:
         entries = _dir_listing(target, max_depth=depth)
 
         return json.dumps({
-            "path": str(target.relative_to(_get_hermes_repo())),
+            "path": _display_path(target),
             "depth": depth,
             "entries": entries,
         }, indent=2)
 
-    logger.debug("Registered 7 skills/knowledge MCP tools")
+    # -- knowledge_query ---------------------------------------------------
+
+    @mcp.tool()
+    def knowledge_query(question: str) -> str:
+        """Query knowledge graph artifacts with bounded keyword matching.
+
+        Reads `artifacts/ops/knowledge_graph/nodes.jsonl` and `edges.jsonl`
+        when present. This is deterministic keyword matching, not semantic
+        search, and never writes files.
+        """
+        kg_dir = _get_knowledge_graph_dir()
+        if not kg_dir:
+            return json.dumps({
+                "question": question,
+                "error": "knowledge_graph directory not found",
+                "matches": [],
+                "related_edges": [],
+            }, indent=2)
+
+        stop_words = {
+            "what", "which", "who", "how", "does", "do", "is", "are", "the",
+            "a", "an", "in", "on", "of", "to", "for", "and", "or", "that",
+            "this", "from", "with", "by", "at", "it", "its", "my",
+        }
+        keywords = [
+            word.lower().strip("?.,!;:")
+            for word in str(question or "").split()
+        ]
+        keywords = [
+            word for word in keywords
+            if word and word not in stop_words and len(word) > 2
+        ][:20]
+
+        nodes: list[dict] = []
+        edges: list[dict] = []
+        for filename, target in (("nodes.jsonl", nodes), ("edges.jsonl", edges)):
+            path = kg_dir / filename
+            if not path.exists():
+                continue
+            try:
+                for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    line = line.strip()
+                    if line:
+                        target.append(json.loads(line))
+            except (OSError, json.JSONDecodeError) as exc:
+                return json.dumps({
+                    "question": question,
+                    "error": f"Failed to parse {filename}: {exc}",
+                    "matches": [],
+                    "related_edges": [],
+                }, indent=2)
+
+        matches: list[dict] = []
+        matched_ids: set[str] = set()
+        for node in nodes:
+            node_text = json.dumps(node, ensure_ascii=False).lower()
+            score = sum(1 for kw in keywords if kw in node_text)
+            if score > 0:
+                item = dict(node)
+                item["_relevance"] = score
+                matches.append(item)
+                node_id = item.get("id") or item.get("name")
+                if node_id:
+                    matched_ids.add(str(node_id))
+
+        matches.sort(key=lambda item: item.get("_relevance", 0), reverse=True)
+        matches = matches[:20]
+        for item in matches:
+            item.pop("_relevance", None)
+
+        related_edges: list[dict] = []
+        for edge in edges:
+            source = str(edge.get("source", edge.get("from", "")))
+            target = str(edge.get("target", edge.get("to", "")))
+            edge_text = json.dumps(edge, ensure_ascii=False).lower()
+            if (
+                source in matched_ids
+                or target in matched_ids
+                or any(kw in edge_text for kw in keywords)
+            ):
+                related_edges.append(edge)
+            if len(related_edges) >= 30:
+                break
+
+        return json.dumps({
+            "question": question,
+            "as_of": datetime.now(timezone.utc).isoformat(),
+            "keywords_used": keywords,
+            "matches": matches,
+            "related_edges": related_edges,
+            "stats": {
+                "total_nodes": len(nodes),
+                "total_edges": len(edges),
+                "matched_nodes": len(matches),
+                "related_edges": len(related_edges),
+            },
+        }, indent=2)
+
+    logger.debug("Registered 11 skills/knowledge MCP tools")

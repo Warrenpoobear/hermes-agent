@@ -34,6 +34,7 @@ def _pid_alive(pid: int) -> bool:
 class TestZombieReproduction:
     """Demonstrate that subprocesses survive when cleanup is not called."""
 
+    @pytest.mark.live_system_guard_bypass
     def test_orphaned_processes_survive_without_cleanup(self):
         """REPRODUCTION: processes spawned directly survive if no one kills
         them — this models the gap that causes zombie accumulation when
@@ -64,6 +65,7 @@ class TestZombieReproduction:
                 except (ProcessLookupError, PermissionError):
                     pass
 
+    @pytest.mark.live_system_guard_bypass
     def test_explicit_terminate_reaps_processes(self):
         """Explicitly terminating+waiting on Popen handles works.
         This models what ProcessRegistry.kill_process does internally."""
@@ -213,7 +215,7 @@ class TestGatewayCleanupWiring:
         runner._restart_task_started = False
         runner._restart_detached = False
         runner._restart_via_service = False
-        runner._restart_drain_timeout = 5.0
+        runner._restart_drain_timeout = 0.1
         runner._voice_mode = {}
         runner._session_model_overrides = {}
         runner._update_prompt_pending = {}

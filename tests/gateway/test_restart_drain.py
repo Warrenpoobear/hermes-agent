@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 import gateway.run as gateway_run
+from agent.i18n import t
 from gateway.platforms.base import MessageEvent, MessageType
 from gateway.restart import DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT
 from gateway.session import SessionEntry, build_session_key
@@ -18,6 +19,14 @@ async def test_restart_command_while_busy_requests_drain_without_interrupt(monke
     # Ensure INVOCATION_ID is NOT set — systemd sets this in service mode,
     # which changes the restart call signature.
     monkeypatch.delenv("INVOCATION_ID", raising=False)
+    real_exists = gateway_run.os.path.exists
+    monkeypatch.setattr(
+        gateway_run.os.path,
+        "exists",
+        lambda path: False
+        if path in {"/.dockerenv", "/run/.containerenv"}
+        else real_exists(path),
+    )
     runner, _adapter = make_restart_runner()
     runner.request_restart = MagicMock(return_value=True)
     event = MessageEvent(
@@ -32,7 +41,16 @@ async def test_restart_command_while_busy_requests_drain_without_interrupt(monke
 
     result = await runner._handle_message(event)
 
-    assert result == "⏳ Draining 1 active agent(s) before restart..."
+    expected = t("gateway.draining", count=1)
+    assert result == expected
+    # Guard against the silent-degradation regression in #22266: if the i18n
+    # catalog cannot be resolved (e.g. xdist workers losing the locales path)
+    # then ``t("gateway.draining", count=1)`` returns the bare key
+    # ``"gateway.draining"`` instead of the formatted English string, and both
+    # sides of the equality above would still match. Assert on the catalog
+    # output explicitly so a broken locale resolution fails loudly here.
+    assert expected != "gateway.draining"
+    assert "Draining" in expected and "1" in expected
     running_agent.interrupt.assert_not_called()
     runner.request_restart.assert_called_once_with(detached=True, via_service=False)
 

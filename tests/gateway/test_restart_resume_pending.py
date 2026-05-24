@@ -89,7 +89,7 @@ def _build_agent_history(history: list) -> list:
     agent_history: list = []
     for msg in history:
         role = msg.get("role")
-        if not role or role in ("session_meta", "system"):
+        if not role or role in {"session_meta", "system"}:
             continue
         has_tool_calls = "tool_calls" in msg
         has_tool_call_id = "tool_call_id" in msg
@@ -822,8 +822,8 @@ async def test_drain_timeout_uses_restart_reason_when_restarting():
 
 @pytest.mark.asyncio
 async def test_clean_drain_does_not_mark_resume_pending():
-    """If the drain completes within timeout (no force-interrupt), no
-    sessions should be flagged — the normal shutdown path is unchanged."""
+    """If the drain completes within timeout (no force-interrupt), pre-drain
+    resume markers are cleared so the normal shutdown path is unchanged."""
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
 
@@ -846,20 +846,20 @@ async def test_clean_drain_does_not_mark_resume_pending():
     ):
         await runner.stop()
 
-    session_store.mark_resume_pending.assert_not_called()
+    session_store.mark_resume_pending.assert_called_once_with(
+        "agent:main:telegram:dm:A",
+        "shutdown_timeout",
+    )
+    session_store.clear_resume_pending.assert_called_once_with(
+        "agent:main:telegram:dm:A"
+    )
     running_agent.interrupt.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_drain_timeout_only_marks_still_running_sessions():
-    """A session that finished gracefully during the drain window must
-    NOT be marked ``resume_pending`` — it completed cleanly and its
-    next turn should be a normal fresh turn, not one prefixed with the
-    restart-interruption system note.
-
-    Regression guard for using ``self._running_agents`` at timeout
-    rather than the ``active_agents`` drain-start snapshot.
-    """
+    """Drain timeout pre-marks all active sessions for crash safety; the
+    timeout pass only re-marks still-running sessions."""
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
     # Long enough for the finisher to exit, short enough to still time out
@@ -890,8 +890,10 @@ async def test_drain_timeout_only_marks_still_running_sessions():
 
     calls = session_store.mark_resume_pending.call_args_list
     marked = {args[0][0] for args in calls}
-    # Only the session still running at timeout is marked; the finisher is not.
-    assert marked == {session_key_stuck}
+    assert marked == {session_key_finisher, session_key_stuck}
+    called_args = [args[0] for args in calls]
+    assert called_args.count((session_key_stuck, "shutdown_timeout")) == 2
+    assert called_args.count((session_key_finisher, "shutdown_timeout")) == 1
 
 
 @pytest.mark.asyncio

@@ -53,6 +53,14 @@ def _make_agent(monkeypatch):
             self._tool_worker_threads: set = set()
             self._tool_worker_threads_lock = threading.Lock()
             self._active_children_lock = threading.Lock()
+            from agent.tool_guardrails import (
+                ToolCallGuardrailConfig,
+                ToolCallGuardrailController,
+            )
+
+            self._tool_guardrails = ToolCallGuardrailController(
+                ToolCallGuardrailConfig()
+            )
 
         def _touch_activity(self, desc):
             self._last_activity = time.time()
@@ -75,6 +83,12 @@ def _make_agent(monkeypatch):
     stub = _Stub()
     # Bind the real methods under test
     stub._execute_tool_calls_concurrent = _ra.AIAgent._execute_tool_calls_concurrent.__get__(stub)
+    stub._append_guardrail_observation = _ra.AIAgent._append_guardrail_observation.__get__(
+        stub
+    )
+    stub._tool_result_content_for_active_model = (
+        _ra.AIAgent._tool_result_content_for_active_model.__get__(stub)
+    )
     stub.interrupt = _ra.AIAgent.interrupt.__get__(stub)
     stub.clear_interrupt = _ra.AIAgent.clear_interrupt.__get__(stub)
     stub._tool_guardrails = MagicMock()
