@@ -15,6 +15,8 @@ Cursor rule: `.cursor/rules/hermes-fleet.mdc`
 
 Prefer `fleet_context_snapshot()` when available; otherwise run in order:
 
+Before editing `.learnings/memory.md`: `self_improvement_snapshot(summary=True)`.
+
 1. `skills_list()` — discover agents and their SOUL.md files
 2. `agents_list(include_heartbeat=true)` — registry + live heartbeat
 3. `learnings_read()` — HOT-tier persistent memory (.learnings/memory.md)
