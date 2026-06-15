@@ -15,6 +15,15 @@ source .venv/bin/activate   # or: source venv/bin/activate
 `$HOME/.hermes/hermes-agent/venv` (for worktrees that share a venv with the
 main checkout).
 
+### Cursor Cloud setup
+
+Cursor Cloud runs `.cursor/setup-cloud-agent.sh` from `.cursor/environment.json`
+at startup. That hook is intentionally non-interactive: it locates or installs
+`uv`, runs `uv sync --extra dev`, and verifies `hermes --version` so
+`scripts/run_tests.sh` has pytest and its plugins available without per-agent
+manual setup. Keep this path free of prompts such as `setup-hermes.sh`'s setup
+wizard prompt.
+
 ## Project Structure
 
 File counts shift constantly — don't treat the tree below as exhaustive.
