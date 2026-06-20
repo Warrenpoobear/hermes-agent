@@ -1,6 +1,6 @@
 # HOT-tier Memory — DEM Fleet (Wake Robin Biotech Screener)
 # Cap: 100 lines. Loaded every session. Do not exceed.
-# Last updated: 2026-05-22
+# Last updated: 2026-06-19
 # Source repo: C:\Projects\biotech_screener\biotech-screener\
 
 ---
@@ -36,7 +36,7 @@
 ## 13F Cohort Status
 
 - **Q1 2026**: CLEARED as of 2026-05-19 (Jaccard 0.875, 42/48 managers, all gates PASS)
-- **Priority firms**: Fairmount, Deep Track, Logos — all filed 2026-05-15
+- **Tier 1 managers**: Fairmount, Deep Track, Logos — all filed 2026-05-15
 - **Key positions**: VRDN (FM 14.04% + DT 5.30%), ORKA coinvest (FM + DT)
 - **Next cycle**: Q2 2026, deadline ~2026-08-14
 
@@ -58,7 +58,7 @@
 - North star: backtests produce evidence only — never change production weights without governance
 - No agent may modify production weights without full multi-gate promotion path
 - Tier 4 changes (architecture, signal promotion) require memo + human approval
-- Town-Hermes Feedback Protocol: FROZEN until after h20d (2026-05-26)
+- Town-Hermes Feedback Protocol: post-h20d phase (h20d 2026-05-26 elapsed) — manual reviewed sync only; automated export gated on two clean manual cycles + operator approval
 - Only `crt_resolution_watcher` holds `mutate_data` authority
 - Lane A agents must not depend on LLM gateway tokens
 - PIT rule: never call set "true PIT" unless archived raw inputs + archived code + archived artifacts all exist
