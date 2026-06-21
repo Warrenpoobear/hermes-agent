@@ -239,6 +239,32 @@ def _count_by_field(entries: dict, field: str) -> dict:
     return dict(sorted(counts.items()))
 
 
+def _iter_agent_subdirs(agents_dir: Path):
+    """Yield non-hidden agent subdirectories under agents_dir."""
+    for item in sorted(agents_dir.iterdir()):
+        if item.is_dir() and not item.name.startswith("."):
+            yield item
+
+
+def _is_registry_only_agents_dir(agents_dir: Optional[Path]) -> bool:
+    """True when agents_dir has registry metadata but no runtime agent subdirs."""
+    if agents_dir is None or not agents_dir.is_dir():
+        return False
+    return not any(_iter_agent_subdirs(agents_dir))
+
+
+def _heartbeat_check_eligible(meta: object) -> bool:
+    """Return whether registry metadata warrants a live heartbeat check."""
+    if not isinstance(meta, dict):
+        return True
+    status = str(meta.get("status") or "active").lower()
+    if status != "active":
+        return False
+    if meta.get("retired") or meta.get("suppressed"):
+        return False
+    return True
+
+
 def _bounded_read(path: Optional[Path], *, max_chars: int = _SNAPSHOT_TEXT_CAP) -> dict:
     """Read a file without exceeding the snapshot character budget."""
     if not path or not path.exists() or not path.is_file():
@@ -389,10 +415,19 @@ def build_fleet_context_snapshot(*, summary: bool = False) -> dict:
         "by_authority": _count_by_field(registry_entries, "authority"),
     }
 
+    registry_only = _is_registry_only_agents_dir(agents_dir)
+    if registry_only:
+        warnings.append(
+            "agents_dir is registry-only (no runtime agent subdirectories); "
+            "heartbeat checks skipped. Mount HERMES_AGENTS_DIR for live heartbeat status."
+        )
+
     stale_heartbeats: list[dict] = []
     now = datetime.now(timezone.utc).timestamp()
-    if agents_dir and registry_entries:
-        for agent_name in sorted(registry_entries.keys()):
+    if agents_dir and registry_entries and not registry_only:
+        for agent_name, agent_meta in sorted(registry_entries.items()):
+            if not _heartbeat_check_eligible(agent_meta):
+                continue
             heartbeat = agents_dir / agent_name / "HEARTBEAT.md"
             if not heartbeat.exists():
                 stale_heartbeats.append({"agent": agent_name, "status": "missing"})
@@ -466,6 +501,7 @@ def build_fleet_context_snapshot(*, summary: bool = False) -> dict:
             "hermes_home": str(hermes_home),
             "hermes_repo": str(hermes_repo),
             "agents_dir": str(agents_dir) if agents_dir else None,
+            "registry_only": registry_only,
             "registry_present": bool(registry_path),
             "agent_count": len(registry_entries),
             "registry_summary": registry_summary,
@@ -493,6 +529,7 @@ def build_fleet_context_snapshot(*, summary: bool = False) -> dict:
         "hermes_home": str(hermes_home),
         "hermes_repo": str(hermes_repo),
         "agents_dir": str(agents_dir) if agents_dir else None,
+        "registry_only": registry_only,
         "registry_present": bool(registry_path),
         "agent_count": len(registry_entries),
         "registry_summary": registry_summary,
@@ -514,12 +551,17 @@ def build_agent_health_summary() -> dict:
     missing_layers = list(snapshot.get("missing_layers") or [])
     warnings = list(snapshot.get("warnings") or [])
     held_flags = list(snapshot.get("held_spec_flags") or [])
+    registry_only = bool(snapshot.get("registry_only"))
+
+    actionable_warnings = [
+        w for w in warnings
+        if not (registry_only and "registry-only" in w)
+    ]
 
     anomaly_count = (
         len(stale_heartbeats)
         + len(missing_layers)
-        + len(warnings)
-        + len(held_flags)
+        + len(actionable_warnings)
         + (0 if snapshot.get("registry_present") else 1)
     )
 
@@ -536,11 +578,14 @@ def build_agent_health_summary() -> dict:
         "stale_heartbeats": stale_heartbeats[:_SNAPSHOT_LIST_CAP],
         "stale_heartbeats_truncated": len(stale_heartbeats) > _SNAPSHOT_LIST_CAP,
         "missing_layers": missing_layers,
+        "registry_only": registry_only,
         "held_spec_flags_count": len(held_flags),
         "held_spec_flags_sample": held_flags[:10],
         "warnings": warnings[:_SNAPSHOT_LIST_CAP],
         "warning_count": len(warnings),
         "next_action": (
+            "Mount HERMES_AGENTS_DIR for live heartbeat status."
+            if registry_only and not anomaly_count else
             "Review stale/missing layers before changing governed code."
             if anomaly_count else
             "No actionable fleet health anomalies in local MCP snapshot."
@@ -617,9 +662,12 @@ def build_town_brief() -> dict:
             "detail": heartbeat,
         })
     for warning in snapshot.get("warnings") or []:
+        severity = "warning"
+        if snapshot.get("registry_only") and "registry-only" in warning:
+            severity = "info"
         active_issues.append({
             "kind": "warning",
-            "severity": "warning",
+            "severity": severity,
             "detail": warning,
         })
 
@@ -634,10 +682,14 @@ def build_town_brief() -> dict:
             },
         })
 
+    health_issues = [
+        issue for issue in active_issues
+        if issue.get("severity") not in {"governance", "info"}
+    ]
     status = "ok"
-    if active_issues:
+    if health_issues:
         status = "attention"
-    if any(issue["kind"] in {"missing_registry", "missing_layer"} for issue in active_issues):
+    if any(issue["kind"] in {"missing_registry", "missing_layer"} for issue in health_issues):
         status = "degraded"
 
     next_actions = [
