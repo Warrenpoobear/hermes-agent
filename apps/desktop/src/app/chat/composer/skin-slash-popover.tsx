@@ -2,7 +2,13 @@ import { desktopSkinSlashCompletions } from '@/lib/desktop-slash-commands'
 import { triggerHaptic } from '@/lib/haptics'
 import { useTheme } from '@/themes/context'
 
-import { COMPLETION_DRAWER_CLASS, COMPLETION_DRAWER_ROW_CLASS, CompletionDrawerEmpty } from './completion-drawer'
+import { COMPLETION_DRAWER_CLASS, CompletionDrawerEmpty } from './completion-drawer'
+
+const COMPLETION_DRAWER_ROW_CLASS = [
+  'relative flex w-full cursor-default select-none rounded-md px-2 py-1 text-left',
+  'outline-hidden transition-colors hover:bg-(--ui-bg-tertiary)',
+  'data-[highlighted]:bg-(--ui-bg-tertiary) data-[highlighted]:text-foreground'
+].join(' ')
 
 interface SkinSlashPopoverProps {
   draft: string

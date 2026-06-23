@@ -14,7 +14,7 @@ import {
 
 import { setMutableRef } from '@/lib/mutable-ref'
 import { cn } from '@/lib/utils'
-import { setThreadScrolledUp } from '@/store/thread-scroll'
+import { setThreadAtBottom } from '@/store/thread-scroll'
 
 const ESTIMATED_ITEM_HEIGHT = 220
 const OVERSCAN = 4
@@ -287,7 +287,7 @@ function useThreadScrollAnchor({
     })
   }, [groupCount, pinToBottom, stickyBottomRef, virtualizer])
 
-  useEffect(() => () => setThreadScrolledUp(false), [])
+  useEffect(() => () => setThreadAtBottom(true), [])
 
   // Track at-bottom state, dim composer when scrolled up, disarm on user
   // scroll/wheel/touch.
@@ -321,7 +321,7 @@ function useThreadScrollAnchor({
         // Always re-arm — sticky-bottom should hold through clamp races.
         setMutableRef(stickyBottomRef, true)
         const atBottom = el.scrollHeight - (top + el.clientHeight) <= AT_BOTTOM_THRESHOLD
-        setThreadScrolledUp(!atBottom)
+        setThreadAtBottom(atBottom)
 
         return
       }
@@ -349,7 +349,7 @@ function useThreadScrollAnchor({
         setMutableRef(stickyBottomRef, true)
       }
 
-      setThreadScrolledUp(!atBottom)
+      setThreadAtBottom(atBottom)
     }
 
     const onWheel = (event: WheelEvent) => {
