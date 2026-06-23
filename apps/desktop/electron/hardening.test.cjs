@@ -114,3 +114,10 @@ test('resolveReadableFileForIpc validates existence type size and sensitivity', 
   })
   assert.equal(envTemplate.resolvedPath, envTemplatePath)
 })
+
+test('main process uses Electron console-message event object signature', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'main.cjs'), 'utf8')
+
+  assert.match(source, /webContents\.on\('console-message', \(\.\.\.args\) =>/)
+  assert.doesNotMatch(source, /console-message', \([^)]*detailsOrLevel/)
+})

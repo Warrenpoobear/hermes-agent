@@ -65,16 +65,19 @@ def test_gui_installs_packages_and_launches_desktop_app(tmp_path, monkeypatch):
          patch("hermes_cli.main._desktop_build_needed", return_value=True), \
          patch("hermes_cli.main._write_desktop_build_stamp"), \
          patch("hermes_cli.main._desktop_macos_relaunchable_fixup"), \
-         patch("hermes_cli.main.subprocess.run", side_effect=[pack_ok, launch_ok]) as mock_run, \
+         patch("hermes_cli.main.subprocess.run", return_value=pack_ok) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns())
 
     assert exc.value.code == 0
     mock_install.assert_called_once_with("/usr/bin/npm", root, capture_output=False)
-    assert mock_run.call_args_list[0].args[0] == ["/usr/bin/npm", "run", "pack"]
-    assert mock_run.call_args_list[0].kwargs["cwd"] == desktop_dir
-    assert mock_run.call_args_list[1].args[0] == [str(packaged_exe)]
-    assert mock_run.call_args_list[1].kwargs["cwd"] == desktop_dir
+    mock_run.assert_called_once()
+    assert mock_run.call_args.args[0] == ["/usr/bin/npm", "run", "pack"]
+    assert mock_run.call_args.kwargs["cwd"] == desktop_dir
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == [str(packaged_exe)]
+    assert mock_launch.call_args.kwargs["cwd"] == desktop_dir
 
 
 def test_gui_forwards_desktop_environment_overrides(tmp_path, monkeypatch):
@@ -93,7 +96,8 @@ def test_gui_forwards_desktop_environment_overrides(tmp_path, monkeypatch):
          patch("hermes_cli.main._desktop_build_needed", return_value=True), \
          patch("hermes_cli.main._write_desktop_build_stamp"), \
          patch("hermes_cli.main._desktop_macos_relaunchable_fixup"), \
-         patch("hermes_cli.main.subprocess.run", side_effect=[ok, ok]) as mock_run, \
+         patch("hermes_cli.main.subprocess.run", return_value=ok), \
+         patch("hermes_cli.main._run_desktop_launch", return_value=ok) as mock_launch, \
          pytest.raises(SystemExit):
         cli_main.cmd_gui(_ns(
             fake_boot=True,
@@ -102,7 +106,7 @@ def test_gui_forwards_desktop_environment_overrides(tmp_path, monkeypatch):
             cwd=str(cwd),
         ))
 
-    launch_env = mock_run.call_args_list[1].kwargs["env"]
+    launch_env = mock_launch.call_args.kwargs["env"]
     assert launch_env["HERMES_DESKTOP_BOOT_FAKE"] == "1"
     assert launch_env["HERMES_DESKTOP_IGNORE_EXISTING"] == "1"
     assert launch_env["HERMES_DESKTOP_HERMES_ROOT"] == str(hermes_root)
@@ -143,14 +147,14 @@ def test_gui_skip_build_launches_existing_packaged_app_without_npm(tmp_path, mon
 
     with patch("hermes_cli.main.shutil.which", return_value=None), \
          patch("hermes_cli.main._run_npm_install_deterministic") as mock_install, \
-         patch("hermes_cli.main.subprocess.run", return_value=launch_ok) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns(skip_build=True))
 
     assert exc.value.code == 0
     mock_install.assert_not_called()
-    mock_run.assert_called_once()
-    assert mock_run.call_args.args[0] == [str(packaged_exe)]
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == [str(packaged_exe)]
 
 
 def test_gui_linux_configures_sandbox_before_launch(tmp_path, monkeypatch):
@@ -164,13 +168,15 @@ def test_gui_linux_configures_sandbox_before_launch(tmp_path, monkeypatch):
 
     with patch("hermes_cli.main.shutil.which", return_value="/usr/bin/sudo"), \
          patch("hermes_cli.main.subprocess.run", return_value=ok) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns(skip_build=True))
 
     assert exc.value.code == 0
     assert mock_run.call_args_list[0].args[0] == ["/usr/bin/sudo", "chown", "root:root", str(sandbox)]
     assert mock_run.call_args_list[1].args[0] == ["/usr/bin/sudo", "chmod", "4755", str(sandbox)]
-    assert mock_run.call_args_list[2].args[0] == [str(packaged_exe)]
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == [str(packaged_exe)]
 
 
 def test_gui_linux_rejects_symlink_sandbox(tmp_path, monkeypatch):
@@ -212,14 +218,16 @@ def test_gui_linux_skips_fixup_when_already_configured(tmp_path, monkeypatch):
     launch_ok = subprocess.CompletedProcess([str(packaged_exe)], 0)
 
     with patch("hermes_cli.main.shutil.which", return_value="/usr/bin/sudo"), \
-         patch("hermes_cli.main.subprocess.run", return_value=launch_ok) as mock_run, \
+         patch("hermes_cli.main.subprocess.run") as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns(skip_build=True))
 
     assert exc.value.code == 0
-    # Only the launch call — no sudo chown/chmod
-    mock_run.assert_called_once()
-    assert mock_run.call_args.args[0] == [str(packaged_exe)]
+    # No sudo chown/chmod; launch is handled by the desktop wrapper.
+    mock_run.assert_not_called()
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == [str(packaged_exe)]
 
 
 def test_gui_source_mode_uses_renderer_build_and_electron(tmp_path, monkeypatch):
@@ -235,15 +243,40 @@ def test_gui_source_mode_uses_renderer_build_and_electron(tmp_path, monkeypatch)
          patch("hermes_cli.main._run_npm_install_deterministic", return_value=install_ok), \
          patch("hermes_cli.main._desktop_build_needed", return_value=True), \
          patch("hermes_cli.main._write_desktop_build_stamp"), \
-         patch("hermes_cli.main.subprocess.run", side_effect=[build_ok, launch_ok]) as mock_run, \
+         patch("hermes_cli.main.subprocess.run", return_value=build_ok) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns(source=True))
 
     assert exc.value.code == 0
-    assert mock_run.call_args_list[0].args[0] == ["/usr/bin/npm", "run", "build"]
-    assert mock_run.call_args_list[0].kwargs["cwd"] == desktop_dir
-    assert mock_run.call_args_list[1].args[0] == ["/usr/bin/npm", "exec", "--", "electron", "."]
-    assert mock_run.call_args_list[1].kwargs["cwd"] == desktop_dir
+    mock_run.assert_called_once()
+    assert mock_run.call_args.args[0] == ["/usr/bin/npm", "run", "build"]
+    assert mock_run.call_args.kwargs["cwd"] == desktop_dir
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == ["/usr/bin/npm", "exec", "--", "electron", "."]
+    assert mock_launch.call_args.kwargs["cwd"] == desktop_dir
+
+
+def test_desktop_launch_output_filter_removes_known_electron_noise():
+    lines = [
+        "[hermes] install stamp: abc123 (main) from local\n",
+        "LaunchProcess: failed to execvp:\n",
+        "xdg-settings\n",
+        "(node:28404) [DEP0180] DeprecationWarning: fs.Stats constructor is deprecated.\n",
+        "(Use `Hermes --trace-deprecation ...` to show where the warning was created)\n",
+        "[28404:0623/133203.198535:ERROR:dbus/object_proxy.cc:573] Failed to call method: "
+        "org.freedesktop.systemd1.Manager.StartTransientUnit: object_path= /org/freedesktop/systemd1: "
+        "org.freedesktop.systemd1.UnitExists: Unit app-org.chromium.Chromium-28404.scope was already loaded "
+        "or has a fragment file.\n",
+        "(electron) 'console-message' arguments are deprecated and will be removed.\n",
+        "Please use Event<WebContentsConsoleMessageEventParams> object instead.\n",
+        "[renderer] real failure\n",
+    ]
+
+    assert list(cli_main._desktop_visible_launch_output_lines(lines)) == [
+        "[hermes] install stamp: abc123 (main) from local\n",
+        "[renderer] real failure\n",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -272,14 +305,16 @@ def test_desktop_build_stamp_skips_build_when_up_to_date(tmp_path, monkeypatch):
 
     with patch("hermes_cli.main._desktop_build_needed", return_value=False), \
          patch("hermes_cli.main._run_npm_install_deterministic") as mock_install, \
-         patch("hermes_cli.main.subprocess.run", return_value=launch_ok) as mock_run, \
+         patch("hermes_cli.main.subprocess.run") as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          patch("hermes_cli.main._desktop_macos_relaunchable_fixup"), \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns())
 
     assert exc.value.code == 0
     mock_install.assert_not_called()
-    mock_run.assert_called_once()  # only the launch call, no build
+    mock_run.assert_not_called()
+    mock_launch.assert_called_once()
 
 
 def test_desktop_force_build_overrides_stamp(tmp_path, monkeypatch):
@@ -298,15 +333,16 @@ def test_desktop_force_build_overrides_stamp(tmp_path, monkeypatch):
          patch("hermes_cli.main._desktop_build_needed", return_value=False), \
          patch("hermes_cli.main._write_desktop_build_stamp") as mock_stamp, \
          patch("hermes_cli.main._desktop_macos_relaunchable_fixup"), \
-         patch("hermes_cli.main.subprocess.run", side_effect=[pack_ok, launch_ok]) as mock_run, \
+         patch("hermes_cli.main.subprocess.run", return_value=pack_ok) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns(force_build=True))
 
     assert exc.value.code == 0
     mock_install.assert_called_once()
     mock_stamp.assert_called_once()
-    # pack + launch = 2 calls
-    assert mock_run.call_count == 2
+    mock_run.assert_called_once()
+    mock_launch.assert_called_once()
 
 
 def test_compute_desktop_content_hash_stable(tmp_path, monkeypatch):
@@ -365,6 +401,37 @@ def test_desktop_build_stamp_round_trip(tmp_path, monkeypatch):
     assert cli_main._desktop_build_needed(
         root / "apps" / "desktop", root, source_mode=False
     ) is False
+
+
+def test_desktop_packaged_executable_prefers_linux_arch_hermes(tmp_path, monkeypatch):
+    root = _make_desktop_tree(tmp_path)
+    desktop_dir = root / "apps" / "desktop"
+    monkeypatch.setattr(cli_main.sys, "platform", "linux")
+    monkeypatch.setattr(cli_main.platform, "machine", lambda: "aarch64")
+
+    generic = desktop_dir / "release" / "linux-unpacked" / "hermes"
+    generic.parent.mkdir(parents=True)
+    generic.write_text("", encoding="utf-8")
+    arch = desktop_dir / "release" / "linux-arm64-unpacked" / "Hermes"
+    arch.parent.mkdir(parents=True)
+    arch.write_text("", encoding="utf-8")
+
+    assert cli_main._desktop_packaged_executable(desktop_dir) == arch
+
+
+def test_desktop_packaged_executable_prefers_linux_product_name(tmp_path, monkeypatch):
+    root = _make_desktop_tree(tmp_path)
+    desktop_dir = root / "apps" / "desktop"
+    monkeypatch.setattr(cli_main.sys, "platform", "linux")
+    monkeypatch.setattr(cli_main.platform, "machine", lambda: "x86_64")
+
+    lowercase = desktop_dir / "release" / "linux-unpacked" / "hermes"
+    lowercase.parent.mkdir(parents=True)
+    lowercase.write_text("", encoding="utf-8")
+    product_name = desktop_dir / "release" / "linux-unpacked" / "Hermes"
+    product_name.write_text("", encoding="utf-8")
+
+    assert cli_main._desktop_packaged_executable(desktop_dir) == product_name
 
 
 def test_compute_desktop_content_hash_works_without_gitignore(tmp_path, monkeypatch):
@@ -485,17 +552,19 @@ def test_gui_retries_pack_once_after_purging_build_cache(tmp_path, monkeypatch):
          patch("hermes_cli.main._desktop_linux_sandbox_fixup", return_value=True), \
          patch("hermes_cli.main._write_desktop_build_stamp"), \
          patch("hermes_cli.main._purge_electron_build_cache", return_value=[Path("/c/electron.zip")]) as mock_purge, \
-         patch("hermes_cli.main.subprocess.run", side_effect=[pack_fail, pack_ok, launch_ok]) as mock_run, \
+         patch("hermes_cli.main.subprocess.run", side_effect=[pack_fail, pack_ok]) as mock_run, \
+         patch("hermes_cli.main._run_desktop_launch", return_value=launch_ok) as mock_launch, \
          pytest.raises(SystemExit) as exc:
         cli_main.cmd_gui(_ns())
 
     assert exc.value.code == 0
     mock_purge.assert_called_once()
-    # pack(fail) → purge → pack(ok) → launch = 3 subprocess.run calls
-    assert mock_run.call_count == 3
+    # pack(fail) -> purge -> pack(ok), then launch through the desktop wrapper.
+    assert mock_run.call_count == 2
     assert mock_run.call_args_list[0].args[0] == ["/usr/bin/npm", "run", "pack"]
     assert mock_run.call_args_list[1].args[0] == ["/usr/bin/npm", "run", "pack"]
-    assert mock_run.call_args_list[2].args[0] == [str(packaged_exe)]
+    mock_launch.assert_called_once()
+    assert mock_launch.call_args.args[0] == [str(packaged_exe)]
 
 
 def test_gui_does_not_retry_when_purge_finds_nothing(tmp_path, monkeypatch, capsys):

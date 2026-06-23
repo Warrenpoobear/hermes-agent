@@ -37,11 +37,16 @@ const APP = (() => {
       unpackedDistIndex: path.join(unpacked, 'resources', 'app.asar.unpacked', 'dist', 'index.html')
     }
   }
-  // linux unpacked layout matches windows but with different binary name
-  const unpacked = path.join(RELEASE_ROOT, 'linux-unpacked')
+  // Linux ARM builds use an arch-qualified directory; x64 keeps the historic
+  // linux-unpacked path. Prefer the product-name executable and keep lowercase
+  // only as a compatibility fallback for older local builds.
+  const archUnpacked = path.join(RELEASE_ROOT, `linux-${ARCH}-unpacked`)
+  const genericUnpacked = path.join(RELEASE_ROOT, 'linux-unpacked')
+  const unpacked = ARCH === 'arm64' || fs.existsSync(archUnpacked) ? archUnpacked : genericUnpacked
+  const hermesBinary = path.join(unpacked, 'Hermes')
   return {
     appPath: unpacked,
-    binary: path.join(unpacked, 'hermes'),
+    binary: fs.existsSync(hermesBinary) ? hermesBinary : path.join(unpacked, 'hermes'),
     resourcesPath: path.join(unpacked, 'resources'),
     asarPath: path.join(unpacked, 'resources', 'app.asar'),
     unpackedDistIndex: path.join(unpacked, 'resources', 'app.asar.unpacked', 'dist', 'index.html')

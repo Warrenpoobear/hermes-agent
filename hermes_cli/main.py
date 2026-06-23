@@ -255,6 +255,7 @@ if _try_termux_ultrafast_version():
 import argparse
 import hashlib
 import json
+import platform
 import shutil
 import stat
 import subprocess
@@ -7210,6 +7211,20 @@ def _write_desktop_build_stamp(project_root: Path, *, source_mode: bool) -> None
         logger.debug("Failed to write desktop build stamp: %s", exc)
 
 
+def _desktop_linux_arch() -> str:
+    """Return electron-builder's Linux arch name for this machine."""
+    machine = platform.machine().lower()
+    if machine in {"aarch64", "arm64"}:
+        return "arm64"
+    if machine in {"amd64", "x86_64"}:
+        return "x64"
+    if machine in {"i386", "i686", "x86"}:
+        return "ia32"
+    if machine.startswith("armv7"):
+        return "armv7l"
+    return machine
+
+
 def _desktop_packaged_executable(desktop_dir: Path) -> Optional[Path]:
     """Return the current platform's unpacked Electron app executable."""
     release_dir = desktop_dir / "release"
@@ -7222,16 +7237,27 @@ def _desktop_packaged_executable(desktop_dir: Path) -> Optional[Path]:
             release_dir / "win-arm64-unpacked" / "Hermes.exe",
         ]
     else:
-        candidates = [
-            release_dir / "linux-unpacked" / "hermes",
-            release_dir / "linux-unpacked" / "Hermes",
-            release_dir / "linux-arm64-unpacked" / "hermes",
-            release_dir / "linux-arm64-unpacked" / "Hermes",
-        ]
+        arch = _desktop_linux_arch()
+        dirs = []
+        if arch:
+            dirs.append(release_dir / f"linux-{arch}-unpacked")
+        dirs.append(release_dir / "linux-unpacked")
+        dirs.extend(sorted(release_dir.glob("linux-*-unpacked")))
+
+        candidates = []
+        seen: set[Path] = set()
+        for app_dir in dirs:
+            for executable_name in ("Hermes", "hermes"):
+                candidate = app_dir / executable_name
+                if candidate not in seen:
+                    seen.add(candidate)
+                    candidates.append(candidate)
 
     existing = [p for p in candidates if p.exists()]
     if not existing:
         return None
+    if sys.platform.startswith("linux"):
+        return existing[0]
     return max(existing, key=lambda p: p.stat().st_mtime)
 
 
@@ -7406,6 +7432,86 @@ def _desktop_linux_sandbox_fixup(packaged_executable: Path) -> bool:
     return True
 
 
+def _desktop_visible_launch_output_lines(lines):
+    """Yield desktop launch output minus known benign Electron startup noise."""
+    pending_exec_line = None
+    suppress_deprecation_hint = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if pending_exec_line is not None:
+            if stripped == "xdg-settings":
+                pending_exec_line = None
+                continue
+            yield pending_exec_line
+            pending_exec_line = None
+
+        if stripped == "LaunchProcess: failed to execvp:":
+            pending_exec_line = line
+            continue
+
+        if (
+            stripped.startswith("(node:")
+            and "[DEP0180] DeprecationWarning: fs.Stats constructor is deprecated." in stripped
+        ):
+            suppress_deprecation_hint = True
+            continue
+
+        if (
+            suppress_deprecation_hint
+            and stripped.startswith("(Use `")
+            and " --trace-deprecation " in stripped
+            and "show where the warning was created" in stripped
+        ):
+            suppress_deprecation_hint = False
+            continue
+        suppress_deprecation_hint = False
+
+        if (
+            stripped.startswith("[")
+            and ":ERROR:dbus/object_proxy.cc:" in stripped
+            and "org.freedesktop.systemd1.Manager.StartTransientUnit" in stripped
+            and "Unit app-org.chromium.Chromium-" in stripped
+            and ".scope was already loaded" in stripped
+        ):
+            continue
+
+        if stripped == "(electron) 'console-message' arguments are deprecated and will be removed.":
+            continue
+        if stripped == "Please use Event<WebContentsConsoleMessageEventParams> object instead.":
+            continue
+
+        yield line
+
+    if pending_exec_line is not None:
+        yield pending_exec_line
+
+
+def _run_desktop_launch(cmd: list[str], *, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess:
+    """Run the desktop app while filtering harmless Chromium/Electron stderr."""
+    with subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    ) as proc:
+        if proc.stdout is not None:
+            for line in _desktop_visible_launch_output_lines(proc.stdout):
+                sys.stdout.write(line)
+                if not line.endswith(("\n", "\r")):
+                    sys.stdout.write(os.linesep)
+                sys.stdout.flush()
+        returncode = proc.wait()
+
+    return subprocess.CompletedProcess(cmd, returncode)
+
+
 def cmd_gui(args: argparse.Namespace):
     """Build and launch the native Electron desktop GUI."""
     desktop_dir = PROJECT_ROOT / "apps" / "desktop"
@@ -7543,7 +7649,7 @@ def cmd_gui(args: argparse.Namespace):
 
     if source_mode:
         print("→ Launching Hermes Desktop from source build...")
-        launch_result = subprocess.run([npm, "exec", "--", "electron", "."], cwd=desktop_dir, env=env, check=False)
+        launch_result = _run_desktop_launch([npm, "exec", "--", "electron", "."], cwd=desktop_dir, env=env)
         sys.exit(launch_result.returncode)
 
     if packaged_executable is None:
@@ -7555,7 +7661,7 @@ def cmd_gui(args: argparse.Namespace):
         sys.exit(1)
 
     print(f"→ Launching packaged Hermes Desktop: {packaged_executable}")
-    launch_result = subprocess.run([str(packaged_executable)], cwd=desktop_dir, env=env, check=False)
+    launch_result = _run_desktop_launch([str(packaged_executable)], cwd=desktop_dir, env=env)
     sys.exit(launch_result.returncode)
 
 
