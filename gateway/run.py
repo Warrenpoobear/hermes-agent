@@ -8408,6 +8408,23 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     )
                     if msg:
                         event.text = msg
+                        try:
+                            from tools.skills_logger_v2 import log_skill as _log_skill
+
+                            _log_skill(
+                                skill_name=_skill_name,
+                                task_context=user_instruction[:200],
+                                inputs={
+                                    "platform": _plat or "unknown",
+                                    "cmd_key": cmd_key,
+                                },
+                                outputs={},
+                                latency_ms=0.0,
+                                success=True,
+                                environment="prod",
+                            )
+                        except Exception:
+                            pass
                         # Fall through to normal message processing with skill content
                 else:
                     # Not an active skill — check if it's a known-but-disabled or
