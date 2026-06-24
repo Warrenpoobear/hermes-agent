@@ -8338,6 +8338,23 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin):
                 if msg:
                     skill_name = skill_commands[base_cmd]["name"]
                     print(f"\n⚡ Loading skill: {skill_name}")
+                    try:
+                        from tools.skills_logger_v2 import log_skill as _log_skill
+
+                        _log_skill(
+                            skill_name=skill_name,
+                            task_context=user_instruction[:200],
+                            inputs={
+                                "cmd": base_cmd,
+                                "session_id": getattr(self, "session_id", "unknown"),
+                            },
+                            outputs={},
+                            latency_ms=0.0,
+                            success=True,
+                            environment="prod",
+                        )
+                    except Exception:
+                        pass
                     if hasattr(self, '_pending_input'):
                         self._pending_input.put(msg)
                 else:
