@@ -78,11 +78,17 @@ timezone, locale, and worker count.
 
 1. **Read-only MCP access.** Skills MCP tools are read-only. Do not write to
    `.learnings/`, `artifacts/`, `agents/AGENT_REGISTRY.json`, or knowledge
-   layer files through MCP.
+   layer files through MCP. (Sanctioned writes go through a reviewed GitHub PR,
+   not through MCP.)
 
-2. **No Town-to-Hermes feedback automation.** The Town-Hermes Feedback Protocol
-   is FROZEN until after h20d. Do not implement automated memory sync,
-   contradiction-ledger routing, or `.learnings/` write paths.
+2. **Town-to-Hermes feedback: freeze LIFTED (2026-06-24).** The Town-Hermes
+   Feedback Protocol freeze (previously frozen until h20d) has been lifted by
+   operator decision. Town-sourced content may now be landed into the repo via
+   reviewed, PR-gated commits (e.g. knowledge-layer references synced from Town
+   skills). Constraints that remain in force: changes land by operator-reviewed
+   PR (no auto-merge); automated `.learnings/` write paths and automated memory
+   sync still require their own explicit spec and approval before activation;
+   the read-only MCP rule in (1) is unchanged.
 
 3. **Held specifications.** Check `held_spec_ledger` before making changes. If a
    spec is held, do not modify the constrained area without operator approval.
@@ -117,7 +123,7 @@ timezone, locale, and worker count.
 
 1. Do not hardcode agent counts — source from `AGENT_REGISTRY.json`
 2. Do not call `pytest` directly — use `scripts/run_tests.sh`
-3. Do not write to `.learnings/` via automation (feedback protocol FROZEN)
+3. Do not write to `.learnings/` via automation without an explicit spec + operator approval (the protocol freeze is lifted, but automated `.learnings/` write paths still require their own clearance)
 4. Do not assign `mutate_config` authority to any agent
 5. Do not create Lane A agents that import LLM modules
 6. Do not reduce API timeout below 2400s (Together cold start spikes)
