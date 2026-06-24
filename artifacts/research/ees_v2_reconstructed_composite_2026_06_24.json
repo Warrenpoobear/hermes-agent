@@ -1,0 +1,73 @@
+{
+  "schema": "ees_v2_reconstructed_composite.v1",
+  "run_date": "2026_06_24",
+  "governance": "DIAGNOSTIC_ONLY | NO_PRODUCTION_SCORING_CHANGE | FREEZE_ACTIVE | NO_LIVE_FETCH",
+  "status": "NO_DATA",
+  "missing_inputs": [
+    "/workspace/biotech-screener/data/snapshots_pit_v2",
+    "/workspace/biotech-screener/production_data/price_history.csv"
+  ],
+  "inputs": {
+    "snapshots_dir": "/workspace/biotech-screener/data/snapshots_pit_v2",
+    "price_csv": "/workspace/biotech-screener/production_data/price_history.csv",
+    "trial_records_path": "/workspace/biotech-screener/production_data/trial_records.json",
+    "live_fetch": false,
+    "production_mutation": false
+  },
+  "predeclared_pass_bar": {
+    "all_horizons_positive_ic": true,
+    "min_horizons_with_newey_west_t_ge_2": 2,
+    "max_single_ticker_ic_contribution_pct": 25.0,
+    "requires_priced_move_only_survival": true,
+    "requires_full_panel_survival": true,
+    "requires_no_lookahead_or_live_universe_dependency": true
+  },
+  "baseline_reference": {
+    "source": "scripts.research.pit_backtest_ees_v2.run_multi_horizon",
+    "signals": []
+  },
+  "ic_weights": {},
+  "variants": {
+    "positive_components_equal_weight": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    },
+    "positive_components_ic_weighted": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    },
+    "original_minus_trap_overlay": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    },
+    "original_minus_base_rate_gap": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    },
+    "original_minus_both": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    },
+    "sign_flip_trap_and_base_rate_gap": {
+      "horizons": {},
+      "pass_bar": {
+        "clears_predeclared_pass_bar": false
+      }
+    }
+  },
+  "best_robust_variant": {
+    "variant": null,
+    "reason": "missing PIT inputs in this environment"
+  },
+  "governance_verdict": "FREEZE_REMAINS_ACTIVE: PIT reconstruction could not be evaluated because required historical inputs are unavailable in this environment; no production promotion is authorized."
+}
