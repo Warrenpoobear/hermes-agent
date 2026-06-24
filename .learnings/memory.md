@@ -114,3 +114,16 @@ When Hermes adds the Rule 12 promotion checklist, point it at the SHARED definit
 - **Threshold:** reuse the `self-improving` skill's canonical `>= 3` occurrences (failure modes all-time; behavioral patterns 7-day window). A parallel Hermes threshold = definition drift (F-2026-001-class) and the two sides will disagree on what "promotable" means.
 - **Feed:** source promotion candidates from the Town Correction Ledger (`content://collections/self-improvement/correction-ledger`) `recurrence_count >= 3` rows — already-counted, deterministic — rather than re-deciding from ad-hoc chat corrections.
 - **Audit-count note:** `audit_hermes_skills.py` 32/32 is expected, not a discrepancy. Town has 40 skills; 8 (SFO / family-office / real-estate framework skills) have no Hermes mirror by design. Worth one line in the audit output so a future reader does not chase a phantom 8-skill drift.
+
+## Skills Corrections Backlog (audit 2026-06-24)
+
+Correction-worthy items found in the skills audit (distinct from expected stale operational state). Each notes who can fix it — none is a fabricated-fact error a Town session can correct without a primary source.
+
+- **FIXED — catalyst-resolution CRL count line.** "0 PENDING (CING 8-K pending)" contradiction reconciled to "CING CRL-inferred, official 8-K still pending verification" (Town doc edit, 2026-06-24). No further action.
+- **OPEN — financial-health composite weights (W1).** V3 Enhanced (24%), V3 Partial (28%), Baker-Style (22%) do not sum to 100%; remaining 72-78% unspecified, so Gate 7 cannot validate them. Fix: source the full weight vectors from production `module_5_composite.py` (or the deployed weight artifact) and document. Repo/code, not a Town edit — do not invent the missing allocations.
+- **OPEN — decision-audit-trail rationale backfill.** D-2026-001 ($5 penny-stock gate) and D-2026-004 (20-day contamination window) carry `evidence: MISSING`. Fix: operator supplies the original rationale; until then leave marked MISSING (do not fabricate).
+- **OPEN — document-lineage cron-schedule row (W5).** Lists screener-ops "5:30 PM" as a possible stale copy vs. `crontab -l` ground truth. Needs the live host crontab — host-gated.
+- **OPEN — v1.14.0 signal rename back-propagation (F-2026-001).** Rule promoted into coding-standards; actual rename to GitHub model docs + .docx not yet propagated. Repo-side.
+- **OPEN — agent-count drift cleanup (F-2026-008).** Rule promoted into hermes-runtime (cite agent_governance.md, dated); downstream stale counts (17/26/27/28) remain in other docs. Repo-side.
+
+These surface in the monthly Self-Learning Loop Review digest until closed.
