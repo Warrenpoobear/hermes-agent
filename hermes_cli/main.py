@@ -5622,11 +5622,17 @@ def cmd_gui(args: argparse.Namespace):
         print("  Expected an unpacked Electron app for the current OS.")
         sys.exit(1)
 
-    if not _desktop_linux_sandbox_fixup(packaged_executable):
-        sys.exit(1)
+    no_sandbox = not _desktop_linux_sandbox_fixup(packaged_executable)
+    if no_sandbox:
+        # Sandbox setup requires root (e.g. WSL2 without interactive sudo).
+        # Fall back to --no-sandbox so the app still launches.
+        print("  ⚠ Launching without Electron sandbox (--no-sandbox fallback)")
 
     print(f"→ Launching packaged Hermes Desktop: {packaged_executable}")
-    launch_result = subprocess.run([str(packaged_executable)], cwd=desktop_dir, env=env, check=False)
+    launch_args = [str(packaged_executable)]
+    if no_sandbox:
+        launch_args.append("--no-sandbox")
+    launch_result = subprocess.run(launch_args, cwd=desktop_dir, env=env, check=False)
     sys.exit(launch_result.returncode)
 
 
