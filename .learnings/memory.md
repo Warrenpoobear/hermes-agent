@@ -83,3 +83,16 @@
 - coinvest_score_z pooled mean IC = -0.031 (14 dates, 28.6% hit rate) — OBSERVE verdict
 - Ranker IC: UNMEASURED (Spec 095 scope bug; blocked until Spec 100)
 - Post-13F refresh IC decomposition: pending (gate: quarantine cleared ✓)
+
+---
+
+## Open Items — Skills Learning Sweep 2026-06-24 (operator decision needed)
+
+Logged from a full read-only sweep of all 40 Town skills (repo Issues are disabled, so tracked here). No model/ranker/selector/scorer/sizing change; observe-only.
+
+1. **Stalled self-improvement loop (failure-patterns PENDING past threshold).** Two entries past the >=3 / one-cycle threshold, blocked on unresolved outages not missing rules:
+   - F-2026-005 Herald dark ~10 weeks (since ~2026-04-14). Code fixes merged; terminal recovery verification never confirmed.
+   - F-2026-006 CI red ~47 days (since ~2026-05-08, PR #285 open). operational-health-baselines own SLA = block merges after 5 red days; freeze exception now moot.
+   - DECISION: for each, confirm recovery from host (terminal) → mark RESOLVED, OR formally accept as known-open with a target date.
+2. **Checklist v2 battery rerun vs final_score — NOT executed (~29d post-freeze-lift).** Highest-priority unblocked research action. Spec 100 tooling fix landed (2faa88e6); ranker IC stays UNMEASURED until the rerun runs. Forward shadow ~61+ trading days, evidence ready.
+3. **Doc-only cleanup (done same session):** catalyst-resolution CRL CING-pending wording reconciled. Still open elsewhere: v1.14.0 signal-rename back-propagation to GitHub model docs + .docx (F-2026-001); agent-count drift cleanup (F-2026-008); decision-audit-trail D-2026-001/004 rationale backfill.
