@@ -1,6 +1,6 @@
 # HOT-tier Memory — DEM Fleet (Wake Robin Biotech Screener)
 # Cap: 100 lines. Loaded every session. Do not exceed.
-# Last updated: 2026-06-19
+# Last updated: 2026-06-24
 # Source repo: C:\Projects\biotech_screener\biotech-screener\
 
 ---
@@ -62,6 +62,18 @@
 - Only `crt_resolution_watcher` holds `mutate_data` authority
 - Lane A agents must not depend on LLM gateway tokens
 - PIT rule: never call set "true PIT" unless archived raw inputs + archived code + archived artifacts all exist
+
+---
+
+## 2026-06-24 Session Updates (supersede where conflicting)
+
+- **Architecture freeze: LIFTED 2026-05-26** (h20d passed). Supersedes "Architecture Freeze: ACTIVE" above.
+- **Town-Hermes feedback freeze: LIFTED 2026-06-24** (operator decision). Town-sourced content may land via reviewed PRs. STILL GATED: automated `.learnings/` write paths + automated memory sync need their own spec + approval; read-only Skills MCP unchanged.
+- **Town skill sync (pilot):** 9 Town skills mapped to `docs/knowledge/*.md` as knowledge-layer references (NOT agents). Open PRs #35-43 (#35 = financial-health + CLAUDE.md freeze-text lift; merge #35 first). Awaiting operator merge.
+- **High-churn skills** (institutional-signal, screener-ops) synced framework-only with live-state banners; volatile state excluded — fetch live via MCP.
+- **SEC Filing Monitor (Town routine):** schedule fixed to single 7 PM ET run (was 9 AM + 7 PM; 9 AM dropped to match prompt).
+- **CNTA:** Eli Lilly acquisition closed 2026-06-24; ADS delisted; coinvest watchlist 17 → 16.
+- **VRDN:** veligrotug PDUFA 2026-06-30 (highest-priority active watch; FM 14.04% + DT 5.4M sh).
 
 ---
 
