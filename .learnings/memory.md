@@ -96,3 +96,21 @@ Logged from a full read-only sweep of all 40 Town skills (repo Issues are disabl
    - DECISION: for each, confirm recovery from host (terminal) → mark RESOLVED, OR formally accept as known-open with a target date.
 2. **Checklist v2 battery rerun vs final_score — NOT executed (~29d post-freeze-lift).** Highest-priority unblocked research action. Spec 100 tooling fix landed (2faa88e6); ranker IC stays UNMEASURED until the rerun runs. Forward shadow ~61+ trading days, evidence ready.
 3. **Doc-only cleanup (done same session):** catalyst-resolution CRL CING-pending wording reconciled. Still open elsewhere: v1.14.0 signal-rename back-propagation to GitHub model docs + .docx (F-2026-001); agent-count drift cleanup (F-2026-008); decision-audit-trail D-2026-001/004 rationale backfill.
+
+---
+
+## Stalled-Loop Verdicts (FILL IN — operator sign-off required) 2026-06-24
+
+Hermes-side mirrors applied via PR #391 (Cursor). Patch-efficacy tracking (harvest_log "2-week post-merge" check) cannot start until these two are RESOLVED — you cannot measure "0 recurrence since fix" on an outage whose recovery was never confirmed from the host. Town cannot read the host (crontab/logs/smoke test), so it cannot self-close these. Pick ONE per entry:
+
+- **F-2026-005 Herald:** [ ] RESOLVED — recovery confirmed from host on ____; verify deduped_{date}.jsonl + classified_{date}.jsonl present  |  [ ] KNOWN-OPEN — target date ____
+- **F-2026-006 CI:** [ ] RESOLVED — CI green on main confirmed ____ (PR #285 merged?)  |  [ ] KNOWN-OPEN — target date ____
+
+On RESOLVED: set the failure-patterns entry to PROMOTED/RESOLVED and add the harvest_log 2-week verification block. On KNOWN-OPEN: record the target date so it stops reading as a silently-stalled loop.
+
+## Self-Improvement Loop — Town↔Hermes alignment note (for Hermes Rule 12) 2026-06-24
+
+When Hermes adds the Rule 12 promotion checklist, point it at the SHARED definition, do not fork it:
+- **Threshold:** reuse the `self-improving` skill's canonical `>= 3` occurrences (failure modes all-time; behavioral patterns 7-day window). A parallel Hermes threshold = definition drift (F-2026-001-class) and the two sides will disagree on what "promotable" means.
+- **Feed:** source promotion candidates from the Town Correction Ledger (`content://collections/self-improvement/correction-ledger`) `recurrence_count >= 3` rows — already-counted, deterministic — rather than re-deciding from ad-hoc chat corrections.
+- **Audit-count note:** `audit_hermes_skills.py` 32/32 is expected, not a discrepancy. Town has 40 skills; 8 (SFO / family-office / real-estate framework skills) have no Hermes mirror by design. Worth one line in the audit output so a future reader does not chase a phantom 8-skill drift.
