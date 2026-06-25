@@ -243,6 +243,7 @@ def _quote_key(key: str) -> str:
     escaped = key.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
 
+
 def render_codex_toml_section(
     servers: dict[str, dict],
     plugins: Optional[list[dict]] = None,
@@ -290,7 +291,7 @@ def render_codex_toml_section(
                 out.append(f"{_quote_key(k)} = {_format_toml_value(v)}")
 
     if plugins:
-        for plugin in sorted(plugins, key=lambda p: f"{p.get('name','')}@{p.get('marketplace','')}"):
+        for plugin in sorted(plugins, key=lambda p: f"{p.get('name', '')}@{p.get('marketplace', '')}"):
             name = plugin.get("name") or ""
             marketplace = plugin.get("marketplace") or "openai-curated"
             enabled = bool(plugin.get("enabled", True))

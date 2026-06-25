@@ -419,7 +419,7 @@ class TestSyncSkills:
         (user_skill / "SKILL.md").write_text("# User modified")
 
         with self._patches(bundled, skills_dir, manifest_file):
-            result = sync_skills(quiet=True)
+            result = sync_skills(quiet=True)  # noqa: F841
 
         assert (user_skill / "SKILL.md").read_text() == "# User modified"
 

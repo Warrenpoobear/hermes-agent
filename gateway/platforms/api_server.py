@@ -595,6 +595,7 @@ else:
 
 class _IdempotencyCache:
     """In-memory idempotency cache with TTL and basic LRU semantics."""
+
     def __init__(self, max_items: int = 1000, ttl_seconds: int = 300):
         from collections import OrderedDict
         self._store = OrderedDict()
@@ -1672,7 +1673,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 name, payload = item
                 data = json.dumps(payload, ensure_ascii=False)
                 await response.write(f"event: {name}\ndata: {data}\n\n".encode("utf-8"))
-                last_write = time.monotonic()
+                last_write = time.monotonic()  # noqa: F841
         except (asyncio.CancelledError, ConnectionResetError):
             task.cancel()
             raise
@@ -2134,7 +2135,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 except (asyncio.CancelledError, Exception):
                     pass
             logger.info("SSE client disconnected; interrupted agent task %s", completion_id)
-        except Exception as _exc:
+        except Exception as _exc:  # noqa: F841
             # Agent crashed mid-stream.  Try to emit an error chunk
             # so the client gets a proper response instead of a
             # TransferEncodingError from incomplete chunked encoding.
@@ -3922,7 +3923,6 @@ class APIServerAdapter(BasePlatformAdapter):
             self._run_streams_created.pop(run_id, None)
 
         return response
-
 
     async def _handle_run_approval(self, request: "web.Request") -> "web.Response":
         """POST /v1/runs/{run_id}/approval — resolve a pending run approval."""

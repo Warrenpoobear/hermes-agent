@@ -263,10 +263,6 @@ class TestEnvConfigLoading:
         for v in self._ENV_VARS:
             monkeypatch.delenv(v, raising=False)
 
-
-
-
-
     def test_missing_subscription_does_not_enable(self, monkeypatch):
         self._clean_env(monkeypatch)
         monkeypatch.setenv("GOOGLE_CHAT_PROJECT_ID", "p")
@@ -280,8 +276,6 @@ class TestEnvConfigLoading:
                            "projects/p/subscriptions/s")
         cfg = load_gateway_config()
         assert _GC not in cfg.platforms
-
-
 
 
 # ===========================================================================
@@ -2349,6 +2343,7 @@ class TestOutboundRetry:
         out so the test runs instantly.
         """
         from plugins.platforms.google_chat import adapter as gc_mod
+
         async def _no_sleep(*_a, **_kw):
             return None
         monkeypatch.setattr(gc_mod.asyncio, "sleep", _no_sleep)
@@ -2372,6 +2367,7 @@ class TestOutboundRetry:
     async def test_gives_up_after_max_attempts(self, adapter, monkeypatch):
         """Three consecutive 503s exhaust the retry budget; the call raises."""
         from plugins.platforms.google_chat import adapter as gc_mod
+
         async def _no_sleep(*_a, **_kw):
             return None
         monkeypatch.setattr(gc_mod.asyncio, "sleep", _no_sleep)
@@ -2389,6 +2385,7 @@ class TestOutboundRetry:
     async def test_does_not_retry_on_400(self, adapter, monkeypatch):
         """A 400 (client error) is permanent — no retry, fails immediately."""
         from plugins.platforms.google_chat import adapter as gc_mod
+
         async def _no_sleep(*_a, **_kw):
             return None
         monkeypatch.setattr(gc_mod.asyncio, "sleep", _no_sleep)
@@ -2801,11 +2798,13 @@ class TestCronSchedulerRegistry:
             return
         # Fallback: construct a minimal ctx and call register directly.
         from plugins.platforms.google_chat.adapter import register as _register
+
         class _Ctx:
             class _M:
                 name = "google_chat-platform"
             manifest = _M()
             _manager = type("_Mgr", (), {"_plugin_platform_names": set()})()
+
             def register_platform(self, **kwargs):
                 from gateway.platform_registry import PlatformEntry
                 entry = PlatformEntry(source="plugin", **kwargs)

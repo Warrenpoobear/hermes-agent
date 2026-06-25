@@ -16,6 +16,7 @@ Usage:
 import sys
 import os
 
+
 def convert(path, output_dir=None, output_format="markdown", use_llm=False):
     from marker.converters.pdf import PdfConverter
     from marker.models import create_model_dict

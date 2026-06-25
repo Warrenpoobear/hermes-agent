@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # in headless environments (SSH, Docker, WSL, no PortAudio).
 # ---------------------------------------------------------------------------
 
+
 def _import_audio():
     """Lazy-import sounddevice and numpy.  Returns (sd, np).
 
@@ -62,7 +63,6 @@ def _termux_microphone_command() -> Optional[str]:
     if not _is_termux_environment():
         return None
     return shutil.which("termux-microphone-record")
-
 
 
 def _termux_api_app_installed() -> bool:
@@ -267,6 +267,7 @@ def detect_audio_environment() -> dict:
         "warnings": warnings,
         "notices": notices,
     }
+
 
 # ---------------------------------------------------------------------------
 # Recording parameters

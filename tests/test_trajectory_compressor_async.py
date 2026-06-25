@@ -45,7 +45,7 @@ class TestAsyncClientLazyCreation:
 
         mock_async_openai = MagicMock()
         with patch("openai.AsyncOpenAI", mock_async_openai):
-            client = comp._get_async_client()
+            client = comp._get_async_client()  # noqa: F841
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -75,8 +75,8 @@ class TestAsyncClientLazyCreation:
             return instance
 
         with patch("openai.AsyncOpenAI", side_effect=mock_constructor):
-            client1 = comp._get_async_client()
-            client2 = comp._get_async_client()
+            client1 = comp._get_async_client()  # noqa: F841
+            client2 = comp._get_async_client()  # noqa: F841
 
         # Should have created two separate instances
         assert call_count == 2
@@ -100,10 +100,10 @@ class TestSourceLineVerification:
         # should not exist — only self.async_client = None
         lines = src.split("\n")
         for i, line in enumerate(lines, 1):
-            if "self.async_client = AsyncOpenAI(" in line and "_get_async_client" not in lines[max(0,i-3):i+1]:
+            if "self.async_client = AsyncOpenAI(" in line and "_get_async_client" not in lines[max(0, i-3):i+1]:
                 # Allow it inside _get_async_client method
                 # Check if we're inside _get_async_client by looking at context
-                context = "\n".join(lines[max(0,i-20):i+1])
+                context = "\n".join(lines[max(0, i-20):i+1])
                 if "_get_async_client" not in context:
                     pytest.fail(
                         f"Line {i}: AsyncOpenAI created eagerly outside _get_async_client()"

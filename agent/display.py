@@ -64,10 +64,10 @@ def _diff_ansi() -> dict[str, str]:
         if err_h and len(err_h) == 7:
             er, eg, eb = int(err_h[1:3], 16), int(err_h[3:5], 16), int(err_h[5:7], 16)
             # Use a dark tinted version as background
-            minus = f"\033[38;2;255;255;255;48;2;{max(er//2,20)};{max(eg//4,10)};{max(eb//4,10)}m"
+            minus = f"\033[38;2;255;255;255;48;2;{max(er//2, 20)};{max(eg//4, 10)};{max(eb//4, 10)}m"
         if ok_h and len(ok_h) == 7:
             or_, og, ob = int(ok_h[1:3], 16), int(ok_h[3:5], 16), int(ok_h[5:7], 16)
-            plus = f"\033[38;2;255;255;255;48;2;{max(or_//4,10)};{max(og//2,20)};{max(ob//4,10)}m"
+            plus = f"\033[38;2;255;255;255;48;2;{max(or_//4, 10)};{max(og//2, 20)};{max(ob//4, 10)}m"
     except Exception:
         pass
 
@@ -79,11 +79,13 @@ def _diff_ansi() -> dict[str, str]:
 
 
 # Module-level helpers — each call resolves from the active skin lazily.
-def _diff_dim():   return _diff_ansi()["dim"]
-def _diff_file():  return _diff_ansi()["file"]
-def _diff_hunk():  return _diff_ansi()["hunk"]
+def _diff_dim(): return _diff_ansi()["dim"]
+def _diff_file(): return _diff_ansi()["file"]
+def _diff_hunk(): return _diff_ansi()["hunk"]
 def _diff_minus(): return _diff_ansi()["minus"]
-def _diff_plus():  return _diff_ansi()["plus"]
+def _diff_plus(): return _diff_ansi()["plus"]
+
+
 _MAX_INLINE_DIFF_FILES = 6
 _MAX_INLINE_DIFF_LINES = 80
 
@@ -93,6 +95,7 @@ class LocalEditSnapshot:
     """Pre-tool filesystem snapshot used to render diffs locally after writes."""
     paths: list[Path] = field(default_factory=list)
     before: dict[str, str | None] = field(default_factory=dict)
+
 
 # =========================================================================
 # Configurable tool preview length (0 = no limit)
@@ -1029,5 +1032,3 @@ def get_cute_tool_message(
 # =========================================================================
 # Honcho session line (one-liner with clickable OSC 8 hyperlink)
 # =========================================================================
-
-

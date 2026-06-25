@@ -295,7 +295,7 @@ class TestDelegateTask(unittest.TestCase):
             "summary": "Done", "api_calls": 1, "duration_seconds": 1.0
         }
         parent = _make_mock_parent()
-        result = json.loads(delegate_task(
+        result = json.loads(delegate_task(  # noqa: F841
             goal="This should be ignored",
             tasks=[{"goal": "Actual task"}],
             parent_agent=parent,
@@ -872,8 +872,6 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertIsNone(creds["base_url"])
         self.assertIsNone(creds["api_key"])
 
-
-
     def test_direct_endpoint_uses_configured_base_url_and_api_key(self):
         parent = _make_mock_parent(depth=0)
         cfg = {
@@ -977,7 +975,6 @@ class TestDelegationCredentialResolution(unittest.TestCase):
             creds = _resolve_delegation_credentials(cfg, parent)
         self.assertIsNone(creds["api_key"])
         self.assertEqual(creds["provider"], "custom")
-
 
     @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
     def test_provider_resolution_failure_raises_valueerror(self, mock_resolve):
@@ -1792,7 +1789,6 @@ class TestDelegateHeartbeat(unittest.TestCase):
         )
 
 
-
 class TestDelegationReasoningEffort(unittest.TestCase):
     """Tests for delegation.reasoning_effort config override."""
 
@@ -1903,6 +1899,7 @@ class TestDispatchDelegateTask(unittest.TestCase):
             _, kwargs = mock_build.call_args
             self.assertEqual(kwargs["override_acp_command"], "claude")
             self.assertEqual(kwargs["override_acp_args"], ["--acp", "--stdio"])
+
 
 class TestDelegateEventEnum(unittest.TestCase):
     """Tests for DelegateEvent enum and back-compat aliases."""

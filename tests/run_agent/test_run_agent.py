@@ -1737,7 +1737,6 @@ class TestBuildApiKwargs:
         kwargs = agent._build_api_kwargs(messages)
         assert kwargs["max_tokens"] == 4096
 
-
     def test_qwen_portal_formats_messages_and_metadata(self, agent):
         agent.provider = "qwen-oauth"
         agent.base_url = "https://portal.qwen.ai/v1"
@@ -1836,7 +1835,6 @@ class TestBuildApiKwargs:
         messages = [{"role": "user", "content": "hi"}]
         kwargs = agent._build_api_kwargs(messages)
         assert kwargs.get("extra_body", {}).get("think") is None
-
 
 
 class TestBuildAssistantMessage:
@@ -2406,6 +2404,7 @@ class TestConcurrentToolExecution:
         messages = []
 
         call_count = [0]
+
         def fake_handle(name, args, task_id, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -2771,6 +2770,7 @@ class TestConcurrentToolExecution:
         messages = []
 
         call_count = {"n": 0}
+
         def block_first_only(*args, **kwargs):
             call_count["n"] += 1
             return "Blocked" if call_count["n"] == 1 else None
@@ -4409,7 +4409,7 @@ class TestRunConversation:
         # _record_task_failure should have been called exactly once for
         # the exhaustion event, with outcome="timed_out".
         assert mock_record_failure.call_count == 1, (
-            f"Expected exactly 1 _record_task_failure call, "
+            "Expected exactly 1 _record_task_failure call, "
             f"got {mock_record_failure.call_count}. "
             f"Calls: {mock_record_failure.call_args_list}"
         )
@@ -4729,7 +4729,6 @@ class TestCredentialPoolRecovery:
         assert recovered is True
         assert retry_same is False
         agent._swap_credential.assert_called_once_with(next_entry)
-
 
     def test_recover_with_pool_refreshes_on_401(self, agent):
         """401 with successful refresh should swap to refreshed credential."""
@@ -5088,6 +5087,7 @@ class TestSystemPromptStability:
         # Empty string is falsy, so should fall through to fresh build
         assert "Hermes Agent" in agent._cached_system_prompt
 
+
 class TestBudgetPressure:
     """Budget exhaustion grace call system."""
 
@@ -5180,8 +5180,6 @@ class TestSafeWriter:
         # Still just one layer
         wrapped.write("test")
         assert inner.getvalue() == "test"
-
-
 
 
 # ===================================================================
@@ -5453,7 +5451,7 @@ class TestAnthropicBaseUrlPassthrough:
             patch("agent.anthropic_adapter.build_anthropic_client") as mock_build,
         ):
             mock_build.return_value = MagicMock()
-            a = AIAgent(
+            a = AIAgent(  # noqa: F841
                 api_key="sk-ant-api03-test1234567890",
                 base_url="https://llm-proxy.company.com/v1",
                 api_mode="anthropic_messages",
@@ -5472,7 +5470,7 @@ class TestAnthropicBaseUrlPassthrough:
             patch("agent.anthropic_adapter.build_anthropic_client") as mock_build,
         ):
             mock_build.return_value = MagicMock()
-            a = AIAgent(
+            a = AIAgent(  # noqa: F841
                 api_key="sk-ant...7890",
                 api_mode="anthropic_messages",
                 quiet_mode=True,
@@ -5818,7 +5816,7 @@ class TestInterruptVprintForceTrue:
                 if "force=True" not in stripped:
                     violations.append(f"line {i}: {stripped}")
         assert not violations, (
-            f"Interrupt _vprint calls missing force=True:\n"
+            "Interrupt _vprint calls missing force=True:\n"
             + "\n".join(violations)
         )
 
@@ -6284,7 +6282,7 @@ class TestDeadRetryCode:
         source = inspect.getsource(_rc)
         occurrences = source.count("if retry_count >= max_retries:")
         assert occurrences == 2, (
-            f"Expected 2 occurrences of 'if retry_count >= max_retries:' "
+            "Expected 2 occurrences of 'if retry_count >= max_retries:' "
             f"but found {occurrences}"
         )
 

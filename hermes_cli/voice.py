@@ -274,6 +274,7 @@ def _play_beep(frequency: int, count: int = 1) -> None:
     except Exception as e:
         _debug(f"beep {frequency}Hz failed: {e}")
 
+
 # ── Push-to-talk state ───────────────────────────────────────────────
 _recorder = None
 _recorder_lock = threading.Lock()

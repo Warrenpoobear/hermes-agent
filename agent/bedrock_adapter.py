@@ -1173,6 +1173,7 @@ def _extract_provider_from_arn(arn: str) -> str:
 # Mirrors OpenClaw's classifyFailoverReason() and matchesContextOverflowError()
 # in extensions/amazon-bedrock/register.sync.runtime.ts.
 
+
 # Patterns that indicate the input context exceeded the model's token limit.
 # Used by run_agent.py to trigger context compression instead of retrying.
 CONTEXT_OVERFLOW_PATTERNS = [

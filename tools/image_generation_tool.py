@@ -57,10 +57,10 @@ def _load_fal_client() -> Any:
 
 
 from tools.debug_helpers import DebugSession
-from tools.fal_common import (
+from tools.fal_common import (  # noqa: F401
     _ManagedFalSyncClient,
     _extract_http_status,
-    _normalize_fal_queue_url_format,  # noqa: F401 — re-exported for tests
+    _normalize_fal_queue_url_format,  # re-exported for tests
 )
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
 from tools.tool_backend_helpers import (

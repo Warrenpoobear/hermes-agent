@@ -4,6 +4,8 @@ import sys
 import threading
 import time
 import types
+
+import pytest
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -1944,7 +1946,6 @@ def test_config_set_verbose_updates_session_mode_and_agent(tmp_path, monkeypatch
     assert agent.verbose_logging is True
 
 
-
 def test_config_set_model_waits_for_lazy_agent_before_switch(monkeypatch):
     """A model switch against a lazy-created live session must apply to the
     real agent, not just process env, before the prompt is dispatched.
@@ -1985,6 +1986,7 @@ def test_config_set_model_waits_for_lazy_agent_before_switch(monkeypatch):
         assert calls == [("start", "sid"), ("apply", "sid", agent, "new/model")]
     finally:
         server._sessions.pop("sid", None)
+
 
 def test_config_set_model_uses_live_switch_path(monkeypatch):
     server._sessions["sid"] = _session()
@@ -3580,7 +3582,7 @@ def test_session_create_close_race_does_not_orphan_worker(monkeypatch):
     for _ in range(100):
         if closed_workers:
             break
-        import time
+        import time  # noqa: F402
 
         time.sleep(0.02)
 
@@ -5334,6 +5336,7 @@ def test_notification_poller_delivers_completion(monkeypatch):
     class _ImmediateThread:
         def __init__(self, target=None, daemon=None):
             self._target = target
+
         def start(self):
             self._target()
 
@@ -5393,6 +5396,7 @@ def test_notification_poller_skips_consumed(monkeypatch):
     class _ImmediateThread:
         def __init__(self, target=None, daemon=None):
             self._target = target
+
         def start(self):
             self._target()
 

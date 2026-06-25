@@ -15,7 +15,6 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 
-
 # Path to the source files under test
 _SRC_ROOT = Path(__file__).parent.parent.parent / "hermes_cli"
 
@@ -33,7 +32,7 @@ class TestInitPairClampingBehavior:
         Returns list of (pair_number, fg, bg) tuples from init_pair calls.
         """
         calls = []
-        real_init_pair = curses.init_pair
+        curses.init_pair
 
         def tracking_init_pair(pair, fg, bg):
             calls.append((pair, fg, bg))

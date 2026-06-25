@@ -97,7 +97,7 @@ class _OpenAIProxy:
         return "<lazy openai.OpenAI proxy>"
 
 
-OpenAI = _OpenAIProxy()  # module-level name, resolves lazily on call/isinstance
+OpenAI = _OpenAIProxy()  # noqa: F811  # module-level name, resolves lazily on call/isinstance
 
 from agent.credential_pool import load_pool
 from hermes_cli.config import get_hermes_home
@@ -239,6 +239,8 @@ def _compression_threshold_for_model(model: Optional[str]) -> Optional[float]:
     return None
 
 # Default auxiliary models for direct API-key providers (cheap/fast for side tasks)
+
+
 def _get_aux_model_for_provider(provider_id: str) -> str:
     """Return the cheap auxiliary model for a provider.
 
@@ -378,7 +380,6 @@ def build_nvidia_nim_headers(base_url: str | None) -> dict:
     if base_url_host_matches(str(base_url or ""), "integrate.api.nvidia.com"):
         return dict(_NVIDIA_NIM_CLOUD_HEADERS)
     return {}
-
 
 
 # Nous Portal extra_body for product attribution.
@@ -1497,7 +1498,6 @@ def _resolve_api_key_provider() -> Tuple[Optional[OpenAI], Optional[str]]:
 
 
 # ── Provider resolution helpers ─────────────────────────────────────────────
-
 
 
 def _try_openrouter(explicit_api_key: str = None, model: str = None) -> Tuple[Optional[OpenAI], Optional[str]]:
@@ -3057,6 +3057,7 @@ def _resolve_single_provider(
     )
     return client
 
+
 def _resolve_auto(main_runtime: Optional[Dict[str, Any]] = None) -> Tuple[Optional[OpenAI], Optional[str]]:
     """Full auto-detection chain.
 
@@ -4211,7 +4212,7 @@ def resolve_vision_provider_client(
 
 def get_auxiliary_extra_body() -> dict:
     """Return extra_body kwargs for auxiliary API calls.
-    
+
     Includes Nous Portal product tags when the auxiliary client is backed
     by Nous Portal. Returns empty dict otherwise.
     """
@@ -4220,7 +4221,7 @@ def get_auxiliary_extra_body() -> dict:
 
 def auxiliary_max_tokens_param(value: int) -> dict:
     """Return the correct max tokens kwarg for the auxiliary client's provider.
-    
+
     OpenRouter and local models use 'max_tokens'. Direct OpenAI with newer
     models (gpt-4o, o-series, gpt-5+) requires 'max_completion_tokens'.
     The Codex adapter translates max_tokens internally, so we use max_tokens
@@ -4834,7 +4835,6 @@ def _convert_openai_images_to_anthropic(messages: list) -> list:
                 new_content.append(block)
         converted.append({**msg, "content": new_content} if changed else msg)
     return converted
-
 
 
 def _build_call_kwargs(

@@ -711,6 +711,7 @@ def test_save_custom_provider_uses_provided_name(monkeypatch, tmp_path):
         "hermes_cli.config.load_config", lambda: yaml.safe_load(cfg_path.read_text()) or {},
     )
     saved = {}
+
     def _save(cfg):
         saved.update(cfg)
     monkeypatch.setattr("hermes_cli.config.save_config", _save)

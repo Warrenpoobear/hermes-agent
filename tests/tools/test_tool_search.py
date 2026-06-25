@@ -10,9 +10,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import List, Dict, Any
-
-import pytest
+from typing import Dict, Any
 
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -266,7 +264,7 @@ class TestAssembly:
         assert "tool_search" not in names
 
     def test_idempotent_when_bridge_already_present(self):
-        from tools.tool_search import assemble_tool_defs, ToolSearchConfig, BRIDGE_TOOL_NAMES
+        from tools.tool_search import assemble_tool_defs, ToolSearchConfig
         defs = [_td("terminal", "Run shell"), _td("tool_search", "old")]
         result = assemble_tool_defs(
             defs,
@@ -379,8 +377,7 @@ class TestRegression_OpenClawCron84141:
 
     def test_core_tool_survives_alongside_many_mcp_tools(self):
         from tools.tool_search import (
-            assemble_tool_defs, ToolSearchConfig, BRIDGE_TOOL_NAMES,
-            classify_tools,
+            assemble_tool_defs, ToolSearchConfig, classify_tools,
         )
         # 1 core tool + 50 unknown/MCP-shaped tools (deferrable).
         defs = [_td("terminal", "Run shell commands")]
@@ -535,4 +532,3 @@ class TestRegression_ToolsetScoping:
         assert "mcp_helper_op" in names
         # core tools are never deferrable
         assert "terminal" not in names
-

@@ -709,7 +709,7 @@ class TestUpdatePromptInterception:
         hermes_home = tmp_path / "hermes"
         hermes_home.mkdir()
 
-        event = _make_event(text="hello", chat_id="67890")
+        event = _make_event(text="hello", chat_id="67890")  # noqa: F841
 
         # No pending prompt
         runner._is_user_authorized = MagicMock(return_value=True)

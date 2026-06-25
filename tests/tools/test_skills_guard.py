@@ -126,40 +126,40 @@ class TestShouldAllowInstall:
         assert allowed is True
 
     def test_caution_community_blocked(self):
-        f = [Finding("x", "high", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "high", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(self._result("community", "caution", f))
         assert allowed is False
         assert "Blocked" in reason
 
     def test_caution_trusted_allowed(self):
-        f = [Finding("x", "high", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "high", "c", "", 1, "m", "d")]
         allowed, _ = should_allow_install(self._result("trusted", "caution", f))
         assert allowed is True
 
     def test_trusted_dangerous_blocked_without_force(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, _ = should_allow_install(self._result("trusted", "dangerous", f))
         assert allowed is False
 
     def test_builtin_dangerous_allowed_without_force(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(self._result("builtin", "dangerous", f))
         assert allowed is True
         assert "builtin source" in reason
 
     def test_force_overrides_caution(self):
-        f = [Finding("x", "high", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "high", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(self._result("community", "caution", f), force=True)
         assert allowed is True
         assert "Force-installed" in reason
 
     def test_dangerous_blocked_without_force(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, _ = should_allow_install(self._result("community", "dangerous", f), force=False)
         assert allowed is False
 
     def test_force_does_not_override_dangerous_for_community(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(
             self._result("community", "dangerous", f), force=True
         )
@@ -170,7 +170,7 @@ class TestShouldAllowInstall:
         assert "Use --force to override" not in reason
 
     def test_force_does_not_override_dangerous_for_trusted_message(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(
             self._result("trusted", "dangerous", f), force=True
         )
@@ -182,7 +182,7 @@ class TestShouldAllowInstall:
         # When --force CAN override the block, the error message must still
         # point to it. Use builtin trust + dangerous to land in the block
         # branch without triggering the dangerous-specific message.
-        f = [Finding("x", "high", "network", "f", 1, "m", "d")]
+        f = [Finding("x", "high", "network", "", 1, "m", "d")]
         # Construct a path where decision == block but verdict != dangerous.
         # community + caution = block per current INSTALL_POLICY.
         allowed, reason = should_allow_install(
@@ -192,7 +192,7 @@ class TestShouldAllowInstall:
         assert "Use --force to override" in reason
 
     def test_force_does_not_override_dangerous_for_trusted(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(
             self._result("trusted", "dangerous", f), force=True
         )
@@ -224,7 +224,7 @@ class TestShouldAllowInstall:
         assert "Requires confirmation" in reason
 
     def test_force_overrides_dangerous_for_agent_created(self):
-        f = [Finding("x", "critical", "c", "f", 1, "m", "d")]
+        f = [Finding("x", "critical", "c", "", 1, "m", "d")]
         allowed, reason = should_allow_install(
             self._result("agent-created", "dangerous", f), force=True
         )
@@ -290,7 +290,7 @@ class TestScanFile:
 
     def test_detect_invisible_unicode(self, tmp_path):
         f = tmp_path / "hidden.md"
-        f.write_text(f"normal text\u200b with zero-width space\n")
+        f.write_text("normal text\u200b with zero-width space\n")
         findings = scan_file(f, "hidden.md")
         assert any(fi.pattern_id == "invisible_unicode" for fi in findings)
 
@@ -363,7 +363,6 @@ class TestScanSkill:
 
         result = scan_skill(f, source="community")
         assert result.verdict != "safe"
-
 
 
 # ---------------------------------------------------------------------------

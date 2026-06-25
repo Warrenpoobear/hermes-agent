@@ -518,7 +518,6 @@ def _parse_tags(tags_value) -> List[str]:
     return [t.strip().strip("\"'") for t in tags_value.split(",") if t.strip()]
 
 
-
 def _get_disabled_skill_names() -> Set[str]:
     """Load disabled skill names from config.
 
@@ -1417,8 +1416,6 @@ def skill_view(
         return tool_error(str(e), success=False)
 
 
-
-
 if __name__ == "__main__":
     """Test the skills tool"""
     print("🎯 Skills Tool Test")
@@ -1510,6 +1507,8 @@ registry.register(
     check_fn=check_skills_requirements,
     emoji="📚",
 )
+
+
 def _skill_view_with_bump(args, **kw):
     """Invoke skill_view, then bump view_count on success. Best-effort: a
     telemetry failure never breaks the tool call."""

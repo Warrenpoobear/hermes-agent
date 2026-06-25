@@ -178,7 +178,7 @@ AUTHOR_MAP = {
     "leone.parise@gmail.com": "leoneparise",
     "mr@shu.io": "mrshu",
     "adam.manning@gmail.com": "am423",
-    "buraysandro9@gmail.com": "ygd58",
+    "buraysandro9@gmail.com": "ygd58",  # noqa: F601
     "108427749+buntingszn@users.noreply.github.com": "buntingszn",
     "yanglongwei06@gmail.com": "Alex-yang00",
     "yanghongda@jackyun.com": "yangguangjin",
@@ -224,9 +224,9 @@ AUTHOR_MAP = {
     "HuangYuChuh@users.noreply.github.com": "HuangYuChuh",
     "aaronwong1989@gmail.com": "hrygo",
     "26729613+hrygo@users.noreply.github.com": "hrygo",
-    "erenkar950@gmail.com": "eren-karakus0",
+    "erenkar950@gmail.com": "eren-karakus0",  # noqa: F601
     "aubrey@freeman-wisco.com": "Freeman-Consulting",
-    "don.rhm@gmail.com": "rahimsais",
+    "don.rhm@gmail.com": "rahimsais",  # noqa: F601
     "40222899+rahimsais@users.noreply.github.com": "rahimsais",
     "alfred@Alfreds-Mac-mini.local": "NivOO5",
     "231191380+NivOO5@users.noreply.github.com": "NivOO5",
@@ -313,7 +313,7 @@ AUTHOR_MAP = {
     "25840394+Bongulielmi@users.noreply.github.com": "Bongulielmi",
     "jonathan.troyer@overmatch.com": "JTroyerOvermatch",
     "harryykyle1@gmail.com": "hharry11",
-    "wysie@users.noreply.github.com": "wysie",
+    "wysie@users.noreply.github.com": "wysie",  # noqa: F601
     "ronhi@buildabear1.localdomain": "RonHillDev",  # PR #29523 salvage (machine-local commit email)
     "moikapy@devmoi.com": "Moikapy",  # PR #31527 salvage
     "barany.gabor@gmail.com": "gbarany",  # PR #27907 salvage (xAI sanitizer deepcopy)
@@ -588,10 +588,10 @@ AUTHOR_MAP = {
     "nocoo@users.noreply.github.com": "nocoo",
     "30841158+n-WN@users.noreply.github.com": "n-WN",
     "tsuijinglei@gmail.com": "hiddenpuppy",
-    "buraysandro9@gmail.com": "ygd58",
+    "buraysandro9@gmail.com": "ygd58",  # noqa: F601
     "jerome@clawwork.ai": "HiddenPuppy",
     "jerome.benoit@sap.com": "jerome-benoit",
-    "wysie@users.noreply.github.com": "Wysie",
+    "wysie@users.noreply.github.com": "Wysie",  # noqa: F601
     "leoyuan0099@gmail.com": "keyuyuan",
     "bxzt2006@163.com": "Only-Code-A",
     "i@troy-y.org": "TroyMitchell911",
@@ -705,7 +705,7 @@ AUTHOR_MAP = {
     "rohithsaimidigudla@gmail.com": "whitehatjr1001",
     "0xNyk@users.noreply.github.com": "0xNyk",
     "0xnykcd@googlemail.com": "0xNyk",
-    "buraysandro9@gmail.com": "buray",
+    "buraysandro9@gmail.com": "buray",  # noqa: F601
     "contact@jomar.fr": "joshmartinelle",
     "camilo@tekelala.com": "tekelala",
     "vincentcharlebois@gmail.com": "vincentcharlebois",
@@ -732,7 +732,7 @@ AUTHOR_MAP = {
     "allard.quek@singtel.com": "AllardQuek",
     "openclaw@sparklab.ai": "openclaw",
     "semihcvlk53@gmail.com": "Himess",
-    "erenkar950@gmail.com": "erenkarakus",
+    "erenkar950@gmail.com": "erenkarakus",  # noqa: F601
     "adavyasharma@gmail.com": "adavyas",
     "acaayush1111@gmail.com": "aayushchaudhary",
     "jason@outland.art": "jasonoutland",
@@ -787,7 +787,7 @@ AUTHOR_MAP = {
     "dgrieco@redhat.com": "DomGrieco",
     "dhicham.pro@gmail.com": "spideystreet",
     "dipp.who@gmail.com": "dippwho",
-    "don.rhm@gmail.com": "donrhmexe",
+    "don.rhm@gmail.com": "donrhmexe",  # noqa: F601
     "dorukardahan@hotmail.com": "dorukardahan",
     "dsocolobsky@gmail.com": "dsocolobsky",
     "dylan.socolobsky@lambdaclass.com": "dsocolobsky",
@@ -1083,7 +1083,7 @@ AUTHOR_MAP = {
     "88077783+jjjojoj@users.noreply.github.com": "jjjojoj",
     "valda@underscore.jp": "valda",
     "lling486@163.com": "M3RCUR2Y",
-    "buraysandro9@gmail.com": "ygd58",
+    "buraysandro9@gmail.com": "ygd58",  # noqa: F601
     "ideathinklab01-source@users.noreply.github.com": "ideathinklab01-source",
     "27987889@qq.com": "zng8418",
     "daniuxie88@proton.me": "DaniuXie",
@@ -1923,7 +1923,7 @@ def main():
             return
 
     print(f"{'='*60}")
-    print(f"  Hermes Agent Release Preview")
+    print("  Hermes Agent Release Preview")
     print(f"{'='*60}")
     print(f"  CalVer tag:      {tag_name}")
     print(f"  SemVer:          v{current_version} → v{new_version}")
@@ -1972,7 +1972,7 @@ def main():
             if commit_result.returncode != 0:
                 print(f"  ✗ Failed to commit version bump: {commit_result.stderr.strip()}")
                 return
-            print(f"  ✓ Committed version bump")
+            print("  ✓ Committed version bump")
 
         # Create annotated tag
         tag_result = git_result(
@@ -1987,7 +1987,7 @@ def main():
         # Push
         push_result = git_result("push", "origin", "HEAD", "--tags")
         if push_result.returncode == 0:
-            print(f"  ✓ Pushed to origin")
+            print("  ✓ Pushed to origin")
         else:
             print(f"  ✗ Failed to push to origin: {push_result.stderr.strip()}")
             print("    Continue manually after fixing access:")
@@ -2032,7 +2032,7 @@ def main():
             else:
                 print(f"  ✗ GitHub release failed: {result.stderr.strip()}")
             print(f"    Release notes kept at: {changelog_file}")
-            print(f"    Tag was created locally. Create the release manually:")
+            print("    Tag was created locally. Create the release manually:")
             print(
                 f"    gh release create {tag_name} --title 'Hermes Agent v{new_version} ({calver_date})' "
                 f"--notes-file .release_notes.md {' '.join(str(path) for path in artifacts)}"
@@ -2040,8 +2040,8 @@ def main():
             print(f"\n  ✓ Release artifacts prepared for manual publish: v{new_version} ({tag_name})")
     else:
         print(f"\n{'='*60}")
-        print(f"  Dry run complete. To publish, add --publish")
-        print(f"  Example: python scripts/release.py --bump minor --publish")
+        print("  Dry run complete. To publish, add --publish")
+        print("  Example: python scripts/release.py --bump minor --publish")
         print(f"{'='*60}")
 
 

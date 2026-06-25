@@ -200,7 +200,7 @@ class TestTomlValueFormatter:
         crash), the temp file must be cleaned up. Otherwise repeated
         failed migrations would pile up .config.toml.* files."""
         from pathlib import Path as _Path
-        original_replace = _Path.replace
+        _Path.replace
 
         def failing_replace(self, target):
             raise OSError("simulated disk full")
@@ -394,8 +394,10 @@ class TestMigrate:
         class FakeClient:
             def __init__(self, **kw): pass
             def initialize(self, **kw): pass
+
             def request(self, method, params, timeout=None):
                 return fake_response
+
             def close(self): pass
             def __enter__(self): return self
             def __exit__(self, *a): pass
@@ -433,6 +435,7 @@ class TestMigrate:
         from hermes_cli import codex_runtime_plugin_migration as crpm
 
         called = {"yes": False}
+
         def boom(*a, **kw):
             called["yes"] = True
             return [], None
@@ -448,6 +451,7 @@ class TestMigrate:
         from hermes_cli import codex_runtime_plugin_migration as crpm
 
         called = {"yes": False}
+
         def boom(*a, **kw):
             called["yes"] = True
             return [], None

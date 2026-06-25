@@ -4,13 +4,15 @@
   "governance": "DIAGNOSTIC_ONLY | NO_PRODUCTION_SCORING_CHANGE | FREEZE_ACTIVE | NO_LIVE_FETCH",
   "status": "NO_DATA",
   "missing_inputs": [
-    "/workspace/biotech-screener/data/snapshots_pit_v2",
-    "/workspace/biotech-screener/production_data/price_history.csv"
+    "C:\\Projects\\hermes-agent\\scripts\\research\\pit_backtest_ees_v2.py",
+    "C:\\Projects\\hermes-agent\\data\\snapshots_pit_v2",
+    "C:\\Projects\\hermes-agent\\production_data\\price_history.csv",
+    "C:\\Projects\\hermes-agent\\production_data\\trial_records.json"
   ],
   "inputs": {
-    "snapshots_dir": "/workspace/biotech-screener/data/snapshots_pit_v2",
-    "price_csv": "/workspace/biotech-screener/production_data/price_history.csv",
-    "trial_records_path": "/workspace/biotech-screener/production_data/trial_records.json",
+    "snapshots_dir": "C:\\Projects\\hermes-agent\\data\\snapshots_pit_v2",
+    "price_csv": "C:\\Projects\\hermes-agent\\production_data\\price_history.csv",
+    "trial_records_path": "C:\\Projects\\hermes-agent\\production_data\\trial_records.json",
     "live_fetch": false,
     "production_mutation": false
   },

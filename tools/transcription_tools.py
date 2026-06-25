@@ -47,6 +47,7 @@ from tools.tool_backend_helpers import (
 
 logger = logging.getLogger(__name__)
 
+
 def get_env_value(name, default=None):
     """Read env values through the live config module.
 
@@ -64,6 +65,7 @@ def get_env_value(name, default=None):
 # ---------------------------------------------------------------------------
 # Optional imports — graceful degradation
 # ---------------------------------------------------------------------------
+
 
 import importlib.util as _ilu
 
@@ -114,7 +116,6 @@ _local_model_name: Optional[str] = None
 # ---------------------------------------------------------------------------
 # Config helpers
 # ---------------------------------------------------------------------------
-
 
 
 def _load_stt_config() -> dict:
@@ -1228,7 +1229,6 @@ def _transcribe_local_command(file_path: str, model_name: str) -> Dict[str, Any]
                 subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
             else:
                 subprocess.run(shlex.split(command), check=True, capture_output=True, text=True)
-            
 
             txt_files = sorted(Path(output_dir).glob("*.txt"))
             if not txt_files:

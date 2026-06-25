@@ -204,6 +204,7 @@ class TestDetectAudioEnvironment:
         proc_version.write_text("Linux 5.15.0-microsoft-standard-WSL2")
 
         _real_open = open
+
         def _fake_open(f, *a, **kw):
             if f == "/proc/version":
                 return _real_open(str(proc_version), *a, **kw)
@@ -230,6 +231,7 @@ class TestDetectAudioEnvironment:
         proc_version.write_text("Linux 5.15.0-microsoft-standard-WSL2")
 
         _real_open = open
+
         def _fake_open(f, *a, **kw):
             if f == "/proc/version":
                 return _real_open(str(proc_version), *a, **kw)
@@ -259,6 +261,7 @@ class TestDetectAudioEnvironment:
         proc_version.write_text("Linux 5.15.0-microsoft-standard-WSL2")
 
         _real_open = open
+
         def _fake_open(f, *a, **kw):
             if f == "/proc/version":
                 return _real_open(str(proc_version), *a, **kw)
@@ -321,7 +324,6 @@ class TestDetectAudioEnvironment:
 
         assert result["available"] is False
         assert any("Termux:API Android app is not installed" in w for w in result["warnings"])
-
 
     def test_docker_with_pulse_server_allows_voice(self, monkeypatch):
         """Docker with PULSE_SERVER set should NOT block voice mode (#21203)."""
@@ -997,7 +999,7 @@ class TestPlayBeep:
         assert len(audio_arg) > 0
 
     def test_beep_double_produces_longer_audio(self, mock_sd):
-        np = pytest.importorskip("numpy")
+        pytest.importorskip("numpy")
 
         from tools.voice_mode import play_beep
 
@@ -1419,7 +1421,7 @@ class TestSubprocessTimeoutKill:
     def test_timeout_kills_process(self):
         import subprocess
         proc = subprocess.Popen(["sleep", "600"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        pid = proc.pid
+        proc.pid
         assert proc.poll() is None
 
         try:

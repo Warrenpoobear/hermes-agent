@@ -48,6 +48,7 @@ _COSIGN_ISSUER = "https://token.actions.githubusercontent.com"
 # Config helpers
 # ---------------------------------------------------------------------------
 
+
 def _env_bool(key: str, default: bool) -> bool:
     val = os.getenv(key)
     if val is None:
@@ -128,6 +129,7 @@ def _reset_spawn_warning_state() -> None:
     """
     with _warned_lock:
         _warned_messages.clear()
+
 
 # Disk-persistent failure marker — avoids retry across process restarts
 _MARKER_TTL = 86400  # 24 hours

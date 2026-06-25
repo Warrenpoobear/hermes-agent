@@ -101,7 +101,7 @@ class TestStagedInactivityWarning:
         while True:
             done, _ = concurrent.futures.wait({future}, timeout=_POLL_INTERVAL)
             if done:
-                result = future.result()
+                future.result()
                 break
             _idle_secs = 0.0
             if hasattr(agent, "get_activity_summary"):
@@ -255,10 +255,6 @@ class TestStagedInactivityWarning:
             run_duration=0.5,
             idle_after=0.0,
         )
-
-        _agent_timeout = None
-        _agent_warning = 5.0
-        _POLL_INTERVAL = 0.05
 
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         future = pool.submit(agent.run_conversation, "test")

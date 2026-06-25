@@ -488,7 +488,8 @@ class TestSandboxWritesUtf8:
         em-dashes (which it does — check the transport-header docstring).
         """
         from tools.code_execution_tool import generate_hermes_tools_module
-        import tempfile, ast
+        import tempfile
+        import ast
         stub = generate_hermes_tools_module(
             ["terminal", "read_file", "write_file"], transport="uds"
         )

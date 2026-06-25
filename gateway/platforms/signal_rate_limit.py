@@ -64,6 +64,7 @@ class SignalSchedulerError(Exception):
 # leaked through AttachmentInvalidException).
 # ---------------------------------------------------------------------------
 
+
 # "Retry after 4 seconds" / "retry after 4 second" — libsignal-net's
 # RetryLaterException string form, surfaced when 429s hit during
 # attachment upload (signal-cli wraps these as AttachmentInvalidException

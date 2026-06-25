@@ -54,6 +54,7 @@ def _is_ancestor_or_same(a: Path, b: Path) -> bool:
     except ValueError:
         return False
 
+
 class SubdirectoryHintTracker:
     """Track which directories the agent visits and load hints on first access.
 

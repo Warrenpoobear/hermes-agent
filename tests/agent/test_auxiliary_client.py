@@ -227,7 +227,6 @@ class TestReadCodexAccessToken:
             result = _read_codex_access_token()
         assert result is None
 
-
     def test_expired_jwt_returns_none(self, tmp_path, monkeypatch):
         """Expired JWT tokens should be skipped so auto chain continues."""
         import base64
@@ -677,7 +676,6 @@ class TestExpiredCodexFallback:
             # Should NOT be Codex, should be Anthropic (or another available provider)
             assert not isinstance(client, type(None)), "Should find a provider after expired Codex"
 
-
     def test_expired_codex_openrouter_wins(self, tmp_path, monkeypatch):
         """With expired Codex + OpenRouter key, OpenRouter should win (1st in chain)."""
         import base64
@@ -750,7 +748,6 @@ class TestExpiredCodexFallback:
                 from agent.auxiliary_client import _resolve_auto
                 client, model = _resolve_auto()
                 assert client is not None
-
 
     def test_hermes_oauth_file_sets_oauth_flag(self, monkeypatch):
         """OAuth-style tokens should get is_oauth=*** (token is not sk-ant-api-*)."""
@@ -862,6 +859,7 @@ class TestExplicitProviderRouting:
             "OPENROUTER_API_KEY not set" in record.message
             for record in caplog.records
         )
+
 
 class TestGetTextAuxiliaryClient:
     """Test the full resolution chain for get_text_auxiliary_client."""
@@ -1596,7 +1594,7 @@ class TestCallLlmPaymentFallback:
                     return_value=("auto", "xiaomi/mimo-v2-pro", None, None, None)), \
              patch("agent.auxiliary_client._try_payment_fallback",
                     return_value=(fallback_client, "fallback-model", "openrouter")):
-            result = call_llm(
+            result = call_llm(  # noqa: F841
                 task="session_search",
                 messages=[{"role": "user", "content": "hello"}],
             )
@@ -1634,7 +1632,7 @@ class TestAuxiliaryFallbackLayering:
                    return_value=(chain_client, "gpt-4o-mini", "fallback_chain[0](openai)")), \
              patch("agent.auxiliary_client._try_main_agent_model_fallback",
                    side_effect=main_called):
-            result = call_llm(
+            result = call_llm(  # noqa: F841
                 task="vision",
                 messages=[{"role": "user", "content": "hello"}],
             )
@@ -1663,7 +1661,7 @@ class TestAuxiliaryFallbackLayering:
                    return_value=(None, None, "")), \
              patch("agent.auxiliary_client._try_main_agent_model_fallback",
                    return_value=(main_client, "claude-sonnet-4", "main-agent(openrouter)")):
-            result = call_llm(
+            result = call_llm(  # noqa: F841
                 task="vision",
                 messages=[{"role": "user", "content": "hello"}],
             )
@@ -2111,6 +2109,7 @@ class TestAuxiliaryTaskExtraBody:
 # ---------------------------------------------------------------------------
 # Anthropic-compatible image block conversion
 # ---------------------------------------------------------------------------
+
 
 class TestAnthropicCompatImageConversion:
     """Tests for _is_anthropic_compat_endpoint and _convert_openai_images_to_anthropic."""
@@ -3261,7 +3260,7 @@ class TestBuildCallKwargsToolDedup:
 
 
 @pytest.fixture(autouse=True)
-def _clean_env(monkeypatch):
+def _clean_env(monkeypatch):  # noqa: F811
     """Strip provider env vars so each test starts clean."""
     for key in (
         "OPENROUTER_API_KEY", "OPENAI_BASE_URL", "OPENAI_API_KEY",

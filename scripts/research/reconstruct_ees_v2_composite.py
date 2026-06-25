@@ -26,7 +26,18 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
-from scripts.research import pit_backtest_ees_v2 as pit
+try:
+    from scripts.research import pit_backtest_ees_v2 as pit
+except ImportError:
+    pit = None
+
+DEFAULT_SNAPSHOTS_DIR = (
+    pit.DEFAULT_SNAPSHOTS_DIR if pit is not None else PROJECT_ROOT / "data" / "snapshots_pit_v2"
+)
+DEFAULT_PRICE_CSV = pit.DEFAULT_PRICE_CSV if pit is not None else PROJECT_ROOT / "production_data" / "price_history.csv"
+DEFAULT_TRIAL_RECORDS = (
+    pit.DEFAULT_TRIAL_RECORDS if pit is not None else PROJECT_ROOT / "production_data" / "trial_records.json"
+)
 
 RUN_DATE = "2026_06_24"
 SCHEMA = "ees_v2_reconstructed_composite.v1"
@@ -191,6 +202,9 @@ def build_horizon_records(
     horizon: int,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Build strict PIT event records plus forward returns for one horizon."""
+    if pit is None:
+        raise RuntimeError("scripts.research.pit_backtest_ees_v2 is required to build PIT horizon records")
+
     import sys
 
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -236,6 +250,9 @@ def build_horizon_records(
 
 
 def _evaluate_signal(date_records: Dict[str, List[Dict[str, Any]]], signal_key: str) -> Dict[str, Any]:
+    if pit is None:
+        raise RuntimeError("scripts.research.pit_backtest_ees_v2 is required to evaluate PIT signals")
+
     ic_series = pit._compute_ic_series(date_records, signal_key)
     ics = [x[1] for x in ic_series]
     if not ics:
@@ -260,6 +277,9 @@ def _evaluate_signal(date_records: Dict[str, List[Dict[str, Any]]], signal_key: 
 
 def _max_ticker_contribution_pct(date_records: Dict[str, List[Dict[str, Any]]], signal_key: str) -> Optional[float]:
     """Approximate ticker concentration using absolute demeaned rank covariance."""
+    if pit is None:
+        raise RuntimeError("scripts.research.pit_backtest_ees_v2 is required to evaluate ticker contribution")
+
     contributions: Dict[str, float] = defaultdict(float)
     total_abs = 0.0
     for records in date_records.values():
@@ -335,6 +355,8 @@ def run_reconstruction(
 ) -> Dict[str, Any]:
     """Run baseline PIT backtest and reconstructed variant diagnostics."""
     missing_inputs = []
+    if pit is None:
+        missing_inputs.append(str(PROJECT_ROOT / "scripts" / "research" / "pit_backtest_ees_v2.py"))
     if not snapshots_dir.exists() or not any(snapshots_dir.iterdir() if snapshots_dir.exists() else []):
         missing_inputs.append(str(snapshots_dir))
     if not price_csv.exists():
@@ -382,7 +404,6 @@ def run_reconstruction(
         "best_robust_variant": robust,
         "governance_verdict": _governance_verdict(variants, robust),
     }
-
 
 
 def _no_data_report(
@@ -543,17 +564,17 @@ def write_outputs(report: Dict[str, Any], output_json: Path, output_md: Path) ->
     _assert_output_path_allowed(output_json)
     _assert_output_path_allowed(output_md)
     output_json.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_json, "w", encoding="utf-8") as f:
+    with open(output_json, "w", encoding="utf-8", newline="\n") as f:
         json.dump(report, f, indent=2, default=str)
-    with open(output_md, "w", encoding="utf-8") as f:
+    with open(output_md, "w", encoding="utf-8", newline="\n") as f:
         f.write(render_markdown(report))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Diagnostic-only reconstructed EES v2 composite PIT backtest")
-    parser.add_argument("--snapshots-dir", type=Path, default=pit.DEFAULT_SNAPSHOTS_DIR)
-    parser.add_argument("--prices", type=Path, default=pit.DEFAULT_PRICE_CSV)
-    parser.add_argument("--trials", type=Path, default=pit.DEFAULT_TRIAL_RECORDS)
+    parser.add_argument("--snapshots-dir", type=Path, default=DEFAULT_SNAPSHOTS_DIR)
+    parser.add_argument("--prices", type=Path, default=DEFAULT_PRICE_CSV)
+    parser.add_argument("--trials", type=Path, default=DEFAULT_TRIAL_RECORDS)
     parser.add_argument("--output-json", type=Path, default=PROJECT_ROOT / "artifacts" / "research" / f"ees_v2_reconstructed_composite_{RUN_DATE}.json")
     parser.add_argument("--output-md", type=Path, default=PROJECT_ROOT / "artifacts" / "research" / f"ees_v2_reconstructed_composite_{RUN_DATE}.md")
     parser.add_argument("--print-only", action="store_true", help="Print markdown instead of writing artifacts")

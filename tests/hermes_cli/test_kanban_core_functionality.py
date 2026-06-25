@@ -129,6 +129,7 @@ def test_successful_spawn_does_not_reset_failure_counter(kanban_home, all_assign
     complete_task reset for the replacement point.)
     """
     calls = [0]
+
     def _flaky_spawn(task, ws):
         calls[0] += 1
         if calls[0] <= 2:
@@ -406,14 +407,14 @@ def test_detect_crashed_workers_reclaims(kanban_home):
     conn = kb.connect()
     try:
         tid = kb.create_task(conn, title="x", assignee="worker")
-        res = kb.dispatch_once(conn, spawn_fn=_spawn_pid_that_exits)
+        res = kb.dispatch_once(conn, spawn_fn=_spawn_pid_that_exits)  # noqa: F841
         # Brief sleep to make sure the child's pid has been reaped; on
         # busy CI the pid may be reused by another process, which would
         # fool _pid_alive. If that happens we accept the test still
         # passing as long as the dispatcher ran without error.
         time.sleep(0.2)
         res2 = kb.dispatch_once(conn)
-        task = kb.get_task(conn, tid)
+        kb.get_task(conn, tid)
         # Either crashed was detected (preferred) or the TTL reclaim path
         # will eventually fire; we accept either outcome but the worker_pid
         # should no longer be set.
@@ -466,6 +467,7 @@ def test_daemon_keeps_going_after_tick_exception(kanban_home, monkeypatch):
     monkeypatch.setattr(kb, "dispatch_once", _boom)
 
     stop = threading.Event()
+
     def _runner():
         kb.run_daemon(interval=0.05, stop_event=stop)
 
@@ -486,7 +488,7 @@ def test_board_stats(kanban_home):
     conn = kb.connect()
     try:
         a = kb.create_task(conn, title="a", assignee="x")
-        b = kb.create_task(conn, title="b", assignee="y")
+        b = kb.create_task(conn, title="b", assignee="y")  # noqa: F841
         kb.complete_task(conn, a, result="done")
         stats = kb.board_stats(conn)
         assert stats["by_status"]["ready"] == 1
@@ -939,6 +941,7 @@ def test_max_runtime_terminates_overrun_worker(kanban_home):
     """A running task whose elapsed time exceeds max_runtime_seconds gets
     SIGTERM'd, emits a ``timed_out`` event, and goes back to ready."""
     killed = []
+
     def _signal_fn(pid, sig):
         killed.append((pid, sig))
 
@@ -1074,8 +1077,10 @@ def test_enforce_max_runtime_integrates_with_dispatch(kanban_home, monkeypatch):
     # before timeout enforcement runs. After SIGTERM in enforce_max_runtime,
     # pretend the worker died so the grace wait exits fast.
     state = {"sent_term": False}
+
     def _alive(pid):
         return not state["sent_term"]
+
     def _signal(pid, sig):
         import signal as _sig
         if sig == _sig.SIGTERM:
@@ -1111,7 +1116,7 @@ def test_enforce_max_runtime_integrates_with_dispatch(kanban_home, monkeypatch):
 
         # Now a second dispatch_once run should be a no-op on this task
         # (already released). Confirm the loop doesn't re-report it.
-        res = kb.dispatch_once(conn, spawn_fn=lambda t, ws: None)
+        res = kb.dispatch_once(conn, spawn_fn=lambda t, ws: None)  # noqa: F841
         task = kb.get_task(conn, tid)
         # After timeout, task is back in 'ready' and will be re-spawned
         # by the same pass. That's the intended behaviour.
@@ -1963,7 +1968,8 @@ def test_cli_bulk_complete_with_summary_rejects(kanban_home):
     try:
         a = kb.create_task(conn, title="a", assignee="worker")
         b = kb.create_task(conn, title="b", assignee="worker")
-        kb.claim_task(conn, a); kb.claim_task(conn, b)
+        kb.claim_task(conn, a)
+        kb.claim_task(conn, b)
     finally:
         conn.close()
     # Bulk + summary is refused (stderr message, no mutation).
@@ -1971,7 +1977,8 @@ def test_cli_bulk_complete_with_summary_rejects(kanban_home):
     # (args.func(args) discards the return value), so we check the side
     # effects instead.
     from subprocess import run as _run
-    import os, sys
+    import os
+    import sys
     env = os.environ.copy()
     r = _run(
         [sys.executable, "-m", "hermes_cli.main", "kanban",
@@ -1994,7 +2001,8 @@ def test_cli_bulk_complete_without_summary_still_works(kanban_home):
     try:
         a = kb.create_task(conn, title="a", assignee="worker")
         b = kb.create_task(conn, title="b", assignee="worker")
-        kb.claim_task(conn, a); kb.claim_task(conn, b)
+        kb.claim_task(conn, a)
+        kb.claim_task(conn, b)
     finally:
         conn.close()
     out = run_slash(f"complete {a} {b}")
@@ -2876,7 +2884,6 @@ def test_build_worker_context_includes_runtime_timeout_budget(kanban_home, monke
     assert "Terminal timeout: 3570s" in ctx
 
 
-
 # ---------------------------------------------------------------------------
 # Per-task force-loaded skills
 # ---------------------------------------------------------------------------
@@ -3419,6 +3426,7 @@ def test_check_dispatcher_presence_warns_when_flag_off(monkeypatch):
 def test_check_dispatcher_presence_silent_on_probe_error(monkeypatch):
     """If the probe itself errors, we stay silent."""
     from hermes_cli import kanban as kb_cli
+
     def _raise():
         raise RuntimeError("boom")
     monkeypatch.setattr("gateway.status.get_running_pid", _raise)
@@ -4195,8 +4203,10 @@ def test_enforce_max_runtime_increments_consecutive_failures(kanban_home, monkey
     infinite-respawn gap before unification)."""
     import hermes_cli.kanban_db as _kb
     state = {"sent_term": False}
+
     def _alive(pid):
         return not state["sent_term"]
+
     def _signal(pid, sig):
         import signal as _sig
         if sig == _sig.SIGTERM:
@@ -4248,8 +4258,10 @@ def test_repeated_timeouts_trip_the_circuit_breaker(kanban_home, monkeypatch):
     """
     import hermes_cli.kanban_db as _kb
     state = {"sent_term": False}
+
     def _alive(pid):
         return not state["sent_term"]
+
     def _signal(pid, sig):
         import signal as _sig
         if sig == _sig.SIGTERM:

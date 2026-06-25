@@ -23,7 +23,6 @@ from typing import Optional, Dict, Any
 
 from hermes_cli.nous_subscription import get_nous_subscription_features
 from tools.tool_backend_helpers import managed_nous_tools_enabled
-from utils import base_url_hostname
 from hermes_constants import get_optional_skills_dir
 
 logger = logging.getLogger(__name__)
@@ -126,8 +125,6 @@ def _set_reasoning_effort(config: Dict[str, Any], effort: str) -> None:
     agent_cfg["reasoning_effort"] = effort
 
 
-
-
 # Import config helpers
 from hermes_cli.config import (
     cfg_get,
@@ -226,7 +223,6 @@ def _curses_prompt_choice(question: str, choices: list, default: int = 0, descri
     """Single-select menu using curses. Delegates to curses_radiolist."""
     from hermes_cli.curses_ui import curses_radiolist
     return curses_radiolist(question, choices, selected=default, cancel_returns=-1, description=description)
-
 
 
 def prompt_choice(question: str, choices: list, default: int = 0, description: str | None = None) -> int:
@@ -688,7 +684,6 @@ def _prompt_container_resources(config: dict):
 # =============================================================================
 
 
-
 def setup_model_provider(config: dict, *, quick: bool = False):
     """Configure the inference provider and default model.
 
@@ -731,10 +726,9 @@ def setup_model_provider(config: dict, *, quick: bool = False):
     config.update(_refreshed)
 
     # Derive the selected provider for downstream steps (vision setup).
-    selected_provider = None
     _m = config.get("model")
     if isinstance(_m, dict):
-        selected_provider = _m.get("provider")
+        _m.get("provider")
 
     # Credential rotation, vision-backend selection, and TTS provider are no
     # longer prompted here. They have safe defaults (rotation off, vision
@@ -1050,7 +1044,6 @@ def _setup_tts_provider(config: dict):
             if voice_id and voice_id.strip():
                 config.setdefault("tts", {}).setdefault("xai", {})["voice_id"] = voice_id.strip()
                 print_success(f"xAI voice_id set to: {voice_id.strip()}")
-
 
     elif selected == "minimax":
         existing = get_env_value("MINIMAX_API_KEY")
@@ -1880,9 +1873,9 @@ def _setup_matrix():
                     print_success(f"{matrix_pkg} installed")
                 except Exception as exc:
                     print_warning(
-                        f"Install failed — run manually: pip install "
-                        f"'mautrix[encryption]' asyncpg aiosqlite Markdown "
-                        f"aiohttp-socks"
+                        "Install failed — run manually: pip install "
+                        "'mautrix[encryption]' asyncpg aiosqlite Markdown "
+                        "aiohttp-socks"
                     )
                     print_info(f"  Error: {exc}")
         except ImportError:
@@ -1909,7 +1902,7 @@ def _setup_matrix():
                     print_success(f"{matrix_pkg} installed")
                 else:
                     print_warning(
-                        f"Install failed — run manually: pip install "
+                        "Install failed — run manually: pip install "
                         f"'{matrix_pkg}' asyncpg aiosqlite Markdown aiohttp-socks"
                     )
                     if result.stderr:
@@ -2135,7 +2128,7 @@ def setup_gateway(config: dict):
         # Offer to install the gateway as a system service
         import platform as _platform
 
-        _is_linux = _platform.system() == "Linux"
+        _is_linux = _platform.system() == "Linux"  # noqa: F841
         _is_macos = _platform.system() == "Darwin"
         _is_windows = _platform.system() == "Windows"
 

@@ -374,7 +374,6 @@ def _scan_gateway_pids(exclude_pids: set[int], all_profiles: bool = False) -> li
             # PowerShell's Get-CimInstance.  Any OSError here (FileNotFoundError
             # on missing wmic) trips the fallback.
             wmic_path = shutil.which("wmic")
-            used_fallback = False
             result = None
             if wmic_path is not None:
                 try:
@@ -419,7 +418,6 @@ def _scan_gateway_pids(exclude_pids: set[int], all_profiles: bool = False) -> li
                     )
                 except (OSError, subprocess.TimeoutExpired):
                     return []
-                used_fallback = True
             if result.returncode != 0 or result.stdout is None:
                 return []
             current_cmd = ""
@@ -2337,12 +2335,12 @@ def generate_systemd_unit(system: bool = False, run_as_user: str | None = None) 
     # by a force-interrupted agent get reaped by systemd instead of us
     # (#8202). 30s of headroom covers the worst case we've observed.
     _drain_timeout = int(_get_restart_drain_timeout() or 0)
-    restart_timeout = max(60, _drain_timeout) + 30
+    max(60, _drain_timeout) + 30
 
     if system:
         username, group_name, home_dir = _system_service_identity(run_as_user)
         hermes_home = _hermes_home_for_target_user(home_dir)
-        profile_arg = _profile_arg(hermes_home)
+        _profile_arg(hermes_home)
         # Remap all paths that may resolve under the calling user's home
         # (e.g. /root/) to the target user's home so the service can
         # actually access them.
@@ -2357,7 +2355,7 @@ def generate_systemd_unit(system: bool = False, run_as_user: str | None = None) 
         path_entries.extend(_build_wsl_interop_paths(path_entries))
         path_entries.extend(common_bin_paths)
         sane_path = ":".join(path_entries)
-        return f"""[Unit]
+        return """[Unit]
 Description={SERVICE_DESCRIPTION}
 After=network-online.target
 Wants=network-online.target
@@ -2392,12 +2390,12 @@ WantedBy=multi-user.target
 """
 
     hermes_home = str(get_hermes_home().resolve())
-    profile_arg = _profile_arg(hermes_home)
+    _profile_arg(hermes_home)
     path_entries.extend(_build_user_local_paths(Path.home(), path_entries))
     path_entries.extend(_build_wsl_interop_paths(path_entries))
     path_entries.extend(common_bin_paths)
-    sane_path = ":".join(path_entries)
-    return f"""[Unit]
+    sane_path = ":".join(path_entries)  # noqa: F841
+    return """[Unit]
 Description={SERVICE_DESCRIPTION}
 After=network-online.target
 Wants=network-online.target
@@ -2589,7 +2587,7 @@ def _print_system_scope_remediation(action: str) -> None:
     """
     svc = get_service_name()
     print_warning(
-        f"Gateway is installed as a system-wide service — " f"{action} requires root."
+        "Gateway is installed as a system-wide service — " f"{action} requires root."
     )
     print_info("  Options:")
     print_info(f"    1. {action.capitalize()} it this time:")
@@ -2720,7 +2718,7 @@ def _require_service_installed(action: str, system: bool = False) -> None:
     unit_path = get_systemd_unit_path(system=system)
     if not unit_path.exists():
         scope_flag = " --system" if system else ""
-        print(f"✗ Gateway service is not installed")
+        print("✗ Gateway service is not installed")
         print(f"  Run: {'sudo ' if system else ''}hermes gateway install{scope_flag}")
         sys.exit(1)
 
@@ -3008,11 +3006,11 @@ def generate_launchd_plist() -> str:
     # Stable cwd anchor — never the volatile source checkout. See
     # _stable_service_working_dir() for the rationale (same rot risk applies
     # to launchd's WorkingDirectory as to systemd's).
-    working_dir = _stable_service_working_dir()
+    _stable_service_working_dir()
     hermes_home = str(get_hermes_home().resolve())
     log_dir = get_hermes_home() / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    label = get_launchd_label()
+    get_launchd_label()
     profile_arg = _profile_arg(hermes_home)
     # Build a sane PATH for the launchd plist.  launchd provides only a
     # minimal default (/usr/bin:/bin:/usr/sbin:/sbin) which misses Homebrew,
@@ -3020,7 +3018,7 @@ def generate_launchd_plist() -> str:
     # the systemd unit), then capture the user's full shell PATH so every
     # user-installed tool (node, ffmpeg, …) is reachable.
     detected_venv = _detect_venv_dir()
-    venv_dir = str(detected_venv) if detected_venv else str(PROJECT_ROOT / "venv")
+    str(detected_venv) if detected_venv else str(PROJECT_ROOT / "venv")
     # Resolve the directory containing the node binary (e.g. Homebrew, nvm)
     # so it's explicitly in PATH even if the user's shell PATH changes later.
     priority_dirs = _build_service_path_dirs()
@@ -3029,7 +3027,7 @@ def generate_launchd_plist() -> str:
         resolved_node_dir = str(Path(resolved_node).resolve().parent)
         if resolved_node_dir not in priority_dirs:
             priority_dirs.append(resolved_node_dir)
-    sane_path = ":".join(
+    sane_path = ":".join(  # noqa: F841
         dict.fromkeys(
             priority_dirs + [p for p in os.environ.get("PATH", "").split(":") if p]
         )
@@ -3051,9 +3049,9 @@ def generate_launchd_plist() -> str:
             "<string>--replace</string>",
         ]
     )
-    prog_args_xml = "\n        ".join(prog_args)
+    prog_args_xml = "\n        ".join(prog_args)  # noqa: F841
 
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
+    return """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -3064,10 +3062,10 @@ def generate_launchd_plist() -> str:
     <array>
         {prog_args_xml}
     </array>
-    
+
     <key>WorkingDirectory</key>
     <string>{working_dir}</string>
-    
+
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -3077,16 +3075,16 @@ def generate_launchd_plist() -> str:
         <key>HERMES_HOME</key>
         <string>{hermes_home}</string>
     </dict>
-    
+
     <key>RunAtLoad</key>
     <true/>
-    
+
     <key>KeepAlive</key>
     <true/>
-    
+
     <key>StandardOutPath</key>
     <string>{log_dir}/gateway.log</string>
-    
+
     <key>StandardErrorPath</key>
     <string>{log_dir}/gateway.error.log</string>
 </dict>
@@ -5787,7 +5785,6 @@ def _dispatch_all_via_service_manager_if_s6(action: str) -> bool:
     for profile, exc in errors:
         print(f"✗ Could not {action} gateway-{profile}: {exc}")
     return True
-
 
 
 def gateway_command(args):

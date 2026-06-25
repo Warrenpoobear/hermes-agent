@@ -15,13 +15,13 @@ import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from hermes_cli.config import (
+from hermes_cli.config import (  # noqa: F401
     cfg_get,
     load_config,
     save_config,
     get_env_value,
     save_env_value,
-    get_hermes_home,  # noqa: F401 — used by test mocks
+    get_hermes_home,  # re-exported — used by test mocks
 )
 from hermes_cli.colors import Colors, color
 from hermes_constants import display_hermes_home
@@ -45,11 +45,14 @@ _MCP_PRESETS: Dict[str, Dict[str, Any]] = {
 def _info(text: str):
     print(color(f"  {text}", Colors.DIM))
 
+
 def _success(text: str):
     print(color(f"  ✓ {text}", Colors.GREEN))
 
+
 def _warning(text: str):
     print(color(f"  ⚠ {text}", Colors.YELLOW))
+
 
 def _error(text: str):
     print(color(f"  ✗ {text}", Colors.RED))
@@ -334,7 +337,6 @@ def cmd_mcp_add(args):
             server_config["args"] = cmd_args
         if explicit_env:
             server_config["env"] = explicit_env
-
 
     # ── Authentication ────────────────────────────────────────────────
 
@@ -706,13 +708,13 @@ def cmd_mcp_login(args):
                 "OAuth client yourself and add its credentials to config.yaml:"
             )
             print()
-            print(color(f"    mcp_servers:", Colors.DIM))
+            print(color("    mcp_servers:", Colors.DIM))
             print(color(f"      {name}:", Colors.DIM))
             print(color(f"        url: {url}", Colors.DIM))
-            print(color(f"        auth: oauth", Colors.DIM))
-            print(color(f"        oauth:", Colors.DIM))
-            print(color(f"          client_id: \"<your-oauth-client-id>\"", Colors.DIM))
-            print(color(f"          client_secret: \"<your-oauth-client-secret>\"", Colors.DIM))
+            print(color("        auth: oauth", Colors.DIM))
+            print(color("        oauth:", Colors.DIM))
+            print(color("          client_id: \"<your-oauth-client-id>\"", Colors.DIM))
+            print(color("          client_secret: \"<your-oauth-client-secret>\"", Colors.DIM))
             print()
             _info("Then re-run `hermes mcp login " + name + "`.")
             return

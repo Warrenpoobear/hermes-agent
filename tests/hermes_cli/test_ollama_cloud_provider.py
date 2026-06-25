@@ -41,6 +41,7 @@ PROVIDER_ENV_VARS = (
     "MINIMAX_API_KEY", "DEEPSEEK_API_KEY",
 )
 
+
 @pytest.fixture(autouse=True)
 def _clean_provider_env(monkeypatch):
     for var in PROVIDER_ENV_VARS:

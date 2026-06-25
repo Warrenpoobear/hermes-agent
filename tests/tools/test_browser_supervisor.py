@@ -532,10 +532,13 @@ def test_bridge_captures_prompt_and_returns_reply_text(chrome_cdp, supervisor_re
             rd = _asyncio.create_task(reader_fn())
 
             async def call(method, params=None, sid=None):
-                c = nid[0]; nid[0] += 1
+                c = nid[0]
+                nid[0] += 1
                 p = {"id": c, "method": method}
-                if params: p["params"] = params
-                if sid: p["sessionId"] = sid
+                if params:
+                    p["params"] = params
+                if sid:
+                    p["sessionId"] = sid
                 fut = _asyncio.get_event_loop().create_future()
                 pending[c] = fut
                 await ws.send(json.dumps(p))
@@ -548,7 +551,8 @@ def test_bridge_captures_prompt_and_returns_reply_text(chrome_cdp, supervisor_re
                 sid = a["result"]["sessionId"]
 
                 # Fire navigate but don't await — prompt() blocks the page
-                nav_id = nid[0]; nid[0] += 1
+                nav_id = nid[0]
+                nid[0] += 1
                 nav_fut = _asyncio.get_event_loop().create_future()
                 pending[nav_id] = nav_fut
                 await ws.send(json.dumps({"id": nav_id, "method": "Page.navigate", "params": {"url": url}, "sessionId": sid}))
@@ -584,8 +588,10 @@ def test_bridge_captures_prompt_and_returns_reply_text(chrome_cdp, supervisor_re
                 return r.get("result", {}).get("result", {}).get("value")
             finally:
                 rd.cancel()
-                try: await rd
-                except BaseException: pass
+                try:
+                    await rd
+                except BaseException:
+                    pass
 
     value = asyncio.run(nav_and_read())
     assert value == "AGENT-SUPPLIED-REPLY", f"expected AGENT-SUPPLIED-REPLY, got {value!r}"

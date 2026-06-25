@@ -11,7 +11,8 @@ import pytest
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import gateway code without heavy deps
 # ---------------------------------------------------------------------------
-import sys, types
+import sys
+import types
 
 _tg = types.ModuleType("telegram")
 _tg.constants = types.ModuleType("telegram.constants")

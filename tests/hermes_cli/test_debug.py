@@ -10,6 +10,7 @@ import pytest
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def hermes_home(tmp_path, monkeypatch):
     """Set up an isolated HERMES_HOME with minimal logs."""
@@ -549,6 +550,7 @@ class TestRunDebugShare:
 
         call_count = [0]
         uploaded_content = []
+
         def _mock_upload(content, expiry_days=7):
             call_count[0] += 1
             uploaded_content.append(content)
@@ -646,6 +648,7 @@ class TestRunDebugShare:
         args.local = False
 
         call_count = [0]
+
         def _mock_upload(content, expiry_days=7):
             call_count[0] += 1
             return f"https://paste.rs/paste{call_count[0]}"
@@ -670,6 +673,7 @@ class TestRunDebugShare:
         args.local = False
 
         call_count = [0]
+
         def _mock_upload(content, expiry_days=7):
             call_count[0] += 1
             if call_count[0] > 1:

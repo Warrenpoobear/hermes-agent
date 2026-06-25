@@ -498,7 +498,7 @@ class TestEventBridge:
 @pytest.fixture
 def mcp_server_e2e(populated_sessions_dir, mock_session_db, monkeypatch):
     """Create a fully wired MCP server for E2E testing."""
-    mcp = pytest.importorskip("mcp", reason="MCP SDK not installed")
+    mcp = pytest.importorskip("mcp", reason="MCP SDK not installed")  # noqa: F841
     import mcp_serve
     monkeypatch.setattr(mcp_serve, "_get_sessions_dir", lambda: populated_sessions_dir)
     monkeypatch.setattr(mcp_serve, "_get_session_db", lambda: mock_session_db)
@@ -745,6 +745,7 @@ class TestE2EEventsWait:
         # Even with huge timeout, should return immediately since event exists
         result = _run_tool(server, "events_wait", {"timeout_ms": 999999})
         assert result["event"] is not None
+
 
 class TestMCPToolParameterCoercion:
     def test_conversations_list_coerces_string_limit(self, fake_mcp_server, _event_loop):

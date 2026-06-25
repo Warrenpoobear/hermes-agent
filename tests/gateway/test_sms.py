@@ -55,6 +55,7 @@ class TestSmsConfigLoading:
 
 # ── Format / truncate ───────────────────────────────────────────────
 
+
 class TestSmsFormatAndTruncate:
     """Test SmsAdapter.format_message strips markdown."""
 

@@ -2121,7 +2121,6 @@ class TestAzureAnthropicEnvVarHint:
 
         assert resolved["api_key"] == "fallback-works"
 
-
     def test_no_key_anywhere_raises_helpful_error(self, monkeypatch):
         """When nothing resolves, the error message mentions key_env as an option."""
         monkeypatch.delenv("AZURE_ANTHROPIC_KEY", raising=False)
@@ -2145,6 +2144,7 @@ class TestAzureAnthropicEnvVarHint:
         })
         monkeypatch.setattr(rp, "load_pool", lambda provider: None)
         called = {"resolve_anthropic_token": False}
+
         def _fake_resolve():
             called["resolve_anthropic_token"] = True
             return "token-from-resolver"
@@ -2233,6 +2233,7 @@ class TestProviderEntryApiKeyEnvAlias:
 # Tencent TokenHub — API-key provider runtime resolution
 # =============================================================================
 
+
 class TestTencentTokenhubRuntimeResolution:
     """Verify Tencent TokenHub resolves correctly through the generic
     API-key provider path in resolve_runtime_provider."""
@@ -2313,6 +2314,7 @@ class TestTencentTokenhubRuntimeResolution:
 # ---------------------------------------------------------------------------
 # minimax-oauth runtime resolution tests (added by feat/minimax-oauth-provider)
 # ---------------------------------------------------------------------------
+
 
 def test_minimax_oauth_runtime_returns_anthropic_messages_mode(monkeypatch):
     """resolve_runtime_provider for minimax-oauth must return api_mode='anthropic_messages'."""

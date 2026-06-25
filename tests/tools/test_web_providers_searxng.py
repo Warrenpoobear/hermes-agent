@@ -198,6 +198,7 @@ class TestSearXNGSearchProviderSearch:
         mock_resp = self._make_mock_response({"results": []})
 
         calls = []
+
         def capture_get(url, **kwargs):
             calls.append(url)
             return mock_resp

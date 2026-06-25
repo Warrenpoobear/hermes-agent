@@ -202,6 +202,7 @@ class TestIterSkillsFiles:
         with patch.dict(os.environ, {"HERMES_HOME": str(hermes_home)}):
             assert iter_skills_files() == []
 
+
 class TestPathTraversalSecurity:
     """Path traversal and absolute path rejection.
 

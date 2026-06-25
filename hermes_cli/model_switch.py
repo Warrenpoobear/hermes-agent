@@ -281,6 +281,7 @@ class ModelSwitchResult:
 # Flag parsing
 # ---------------------------------------------------------------------------
 
+
 def parse_model_flags(raw_args: str) -> tuple[str, str, bool, bool]:
     """Parse --provider, --global, and --refresh flags from /model command args.
 
@@ -1265,7 +1266,7 @@ def list_authenticated_providers(
             live = fetch_lmstudio_models(
                 api_key=os.environ.get("LM_API_KEY", ""),
                 base_url=lm_base,
-                timeout=1.5, # Smaller timeout for picker
+                timeout=1.5,  # Smaller timeout for picker
             )
         except AuthError:
             live = []

@@ -309,6 +309,7 @@ class TestEmptyResponseNotSuppressed:
         self._apply_suppression_logic(response, sc)
         assert "already_sent" not in response
 
+
 class TestQueuedMessageAlreadyStreamed:
     """The queued-message path should skip the first response only when the
     final response was actually streamed."""
@@ -391,7 +392,7 @@ class TestCancellationHandlerDeliveryConfirmation:
     def test_partial_only_no_accumulated_stays_false(self):
         """Cancelled after sending intermediate text, nothing accumulated.
         final_response_sent must stay False so the gateway fallback fires."""
-        already_sent = True
+        already_sent = True  # noqa: F841
         final_response_sent = False
         accumulated = ""
         message_id = None
@@ -407,7 +408,7 @@ class TestCancellationHandlerDeliveryConfirmation:
     def test_best_effort_succeeds_sets_true(self):
         """When accumulated content exists and best-effort send succeeds,
         final_response_sent should become True."""
-        already_sent = True
+        already_sent = True  # noqa: F841
         final_response_sent = False
         accumulated = "Here are the search results..."
         message_id = "msg_123"
@@ -423,7 +424,7 @@ class TestCancellationHandlerDeliveryConfirmation:
     def test_best_effort_fails_stays_false(self):
         """When best-effort send fails (flood control, network), the
         gateway fallback must deliver the response."""
-        already_sent = True
+        already_sent = True  # noqa: F841
         final_response_sent = False
         accumulated = "Here are the search results..."
         message_id = "msg_123"
@@ -439,7 +440,7 @@ class TestCancellationHandlerDeliveryConfirmation:
     def test_preserves_existing_true(self):
         """If final_response_sent was already True before cancellation,
         it must remain True regardless."""
-        already_sent = True
+        already_sent = True  # noqa: F841
         final_response_sent = True
         accumulated = ""
         message_id = None

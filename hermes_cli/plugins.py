@@ -64,6 +64,7 @@ def get_bundled_plugins_dir() -> Path:
         return Path(env_override)
     return Path(__file__).resolve().parent.parent / "plugins"
 
+
 try:
     import yaml
 except ImportError:  # pragma: no cover – yaml is optional at import time

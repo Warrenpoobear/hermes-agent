@@ -140,6 +140,7 @@ def _xai_credentials_present() -> bool:
         pass
     return bool(str(os.environ.get("XAI_API_KEY") or "").strip())
 
+
 # Platform-scoped toolsets: only appear in the `hermes tools` checklist for
 # these platforms, and only resolve/save for these platforms.  A toolset
 # absent from this map is available on every platform (current behaviour).
@@ -220,6 +221,7 @@ def _checklist_toolset_keys(platform: str) -> Set[str]:
         for ts_key, _, _ in _get_effective_configurable_toolsets()
         if _toolset_allowed_for_platform(ts_key, platform)
     }
+
 
 # Platform display config — derived from the canonical registry so every
 # module shares the same data.  Kept as dict-of-dicts for backward
@@ -646,7 +648,6 @@ def _pip_install(
         pip_cmd + ["install", *args],
         capture_output=capture_output, text=True, timeout=timeout,
     )
-
 
 
 def _check_cua_driver_asset_for_arch() -> bool:
@@ -1665,7 +1666,7 @@ def _prompt_toolset_checklist(
     if tool_tokens:
         ts_keys = [ts_key for ts_key, _, _ in effective]
 
-        def status_fn(chosen: set) -> str:
+        def status_fn(chosen: set) -> str:  # noqa: F811
             # Collect unique tool names across all selected toolsets
             all_tools: set = set()
             for idx in chosen:
@@ -1694,7 +1695,7 @@ def _configure_toolset(
     force_fresh: bool = True,
 ):
     """Configure a toolset - provider selection + API keys.
-    
+
     Uses TOOL_CATEGORIES for provider-aware config, falls back to simple
     env var prompts for toolsets not in TOOL_CATEGORIES.
     """

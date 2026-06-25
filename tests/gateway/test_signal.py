@@ -81,6 +81,7 @@ class TestSignalConfigLoading:
 # Adapter Init & Helpers
 # ---------------------------------------------------------------------------
 
+
 class TestSignalAdapterInit:
     def test_init_parses_config(self, monkeypatch):
         adapter = _make_signal_adapter(monkeypatch, group_allowed="group123,group456")
@@ -1116,6 +1117,7 @@ class TestSignalQuoteExtraction:
 # ---------------------------------------------------------------------------
 # _rpc rate-limit detection
 # ---------------------------------------------------------------------------
+
 
 class _FakeHttpResponse:
     """Minimal stand-in for httpx.Response — only what _rpc touches."""

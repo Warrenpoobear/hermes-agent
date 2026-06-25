@@ -53,6 +53,7 @@ def _get_anthropic_sdk():
             _anthropic_sdk = None
     return _anthropic_sdk
 
+
 logger = logging.getLogger(__name__)
 
 THINKING_BUDGET = {"xhigh": 32000, "high": 16000, "medium": 8000, "low": 4000}

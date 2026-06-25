@@ -16,6 +16,7 @@ from agent.error_classifier import (
 
 class MockAPIError(Exception):
     """Simulates an OpenAI SDK APIStatusError."""
+
     def __init__(self, message, status_code=None, body=None):
         super().__init__(message)
         self.status_code = status_code
@@ -1473,6 +1474,7 @@ class TestSSLTransientPatterns:
 
 # ── Test: RateLimitError without status_code (Copilot/GitHub Models) ──────────
 
+
 class TestRateLimitErrorWithoutStatusCode:
     """Regression tests for the Copilot/GitHub Models edge case where the
     OpenAI SDK raises RateLimitError but does not populate .status_code."""
@@ -1504,7 +1506,6 @@ class TestRateLimitErrorWithoutStatusCode:
         e.status_code = None
         result = classify_api_error(e, provider="copilot", model="gpt-4o")
         assert result.reason != FailoverReason.rate_limit
-
 
 
 # ── Test: multimodal_tool_content_unsupported pattern ───────────────────

@@ -52,6 +52,7 @@ def test_parse_workspace_flag_expands_user():
     assert path.endswith("/trees/t6-wire")
     assert not path.startswith("~")
 
+
 @pytest.mark.parametrize("bad", ["cloud", "dir:", "worktree:", ""])
 def test_parse_workspace_flag_rejects(bad):
     if not bad:

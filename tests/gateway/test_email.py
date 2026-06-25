@@ -62,6 +62,7 @@ class TestConfigEnvOverrides(unittest.TestCase):
         _apply_env_overrides(config)
         self.assertNotIn(Platform.EMAIL, config.platforms)
 
+
 class TestCheckRequirements(unittest.TestCase):
     """Verify check_email_requirements function."""
 
@@ -285,7 +286,7 @@ class TestDispatchMessage(unittest.TestCase):
 
         adapter._message_handler = mock_handler
         # Override handle_message to capture the event directly
-        original_handle = adapter.handle_message
+        adapter.handle_message
 
         async def capture_handle(event):
             captured_events.append(event)

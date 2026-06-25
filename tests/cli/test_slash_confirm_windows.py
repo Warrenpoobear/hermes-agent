@@ -21,7 +21,6 @@ import time
 from unittest.mock import MagicMock, patch
 
 
-
 def _make_cli():
     """Minimal HermesCLI shell exposing prompt/modal helpers."""
     import cli as cli_mod
@@ -120,14 +119,13 @@ class TestModalWindowsFallback:
              patch.object(cli, "_invalidate"):
             # Start the modal in a way that it will receive a response
             # immediately via the queue.
-            original_queue = queue.Queue
-            original_time = time.monotonic
+            queue.Queue
+            time.monotonic
 
             def _fake_modal_flow(*args, **kwargs):
                 """Simulate the modal flow: set state, put response, return."""
                 # We'll directly test that the modal path is entered by
                 # checking that _slash_confirm_state was set.
-                pass
 
             # Since we can't easily mock the internal queue, let's test
             # that the modal path is entered by checking that

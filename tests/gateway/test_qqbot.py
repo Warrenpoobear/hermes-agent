@@ -238,6 +238,7 @@ class TestQQWebSocketProxy:
 # _strip_at_mention
 # ---------------------------------------------------------------------------
 
+
 class TestStripAtMention:
     def _fn(self, content):
         from gateway.platforms.qqbot import QQAdapter
@@ -1137,7 +1138,7 @@ class TestBuildApprovalText:
         text = build_approval_text(req)
         # Preview is truncated to 300 chars; 1000 "x"s would still push the
         # body past 300, but the inline preview specifically must be capped.
-        preview_line = [
+        preview_line = [  # noqa: F841
             line for line in text.split("\n") if line.startswith("```")
         ]
         # 2 backtick fences; the content line in between is separate.
@@ -1335,6 +1336,7 @@ class TestProcessQuotedContext:
     async def test_quote_with_text_only(self):
         adapter = self._make_adapter()
         # Stub out _process_attachments since there are no attachments anyway.
+
         async def fake_process(_a):
             return {"image_urls": [], "image_media_types": [],
                     "voice_transcripts": [], "attachment_info": ""}
@@ -1623,7 +1625,6 @@ class TestDefaultInteractionDispatch:
             tools.approval.resolve_gateway_approval = orig
 
         assert resolve_calls == [("agent:main:qqbot:c2c:u", "deny", False)]
-
 
     @pytest.mark.asyncio
     async def test_approval_click_rejects_unauthorized_operator(self):

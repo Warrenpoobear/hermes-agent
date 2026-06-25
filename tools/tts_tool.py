@@ -55,6 +55,8 @@ from urllib.parse import urljoin
 from hermes_constants import display_hermes_home
 
 logger = logging.getLogger(__name__)
+
+
 def get_env_value(name, default=None):
     """Read env values through the live config module.
 
@@ -68,6 +70,8 @@ def get_env_value(name, default=None):
         return os.getenv(name, default)
     value = _get_env_value(name)
     return default if value is None else value
+
+
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
 from tools.tool_backend_helpers import (
     managed_nous_tools_enabled,
@@ -82,6 +86,7 @@ from tools.xai_http import hermes_xai_user_agent
 # crashing in headless environments (SSH, Docker, WSL, no PortAudio).
 # ---------------------------------------------------------------------------
 
+
 def _import_edge_tts():
     """Lazy import edge_tts. Returns the module or raises ImportError."""
     try:
@@ -94,6 +99,7 @@ def _import_edge_tts():
     import edge_tts
     return edge_tts
 
+
 def _import_elevenlabs():
     """Lazy import ElevenLabs client. Returns the class or raises ImportError.
 
@@ -104,7 +110,7 @@ def _import_elevenlabs():
     error-handling paths keep working.
     """
     try:
-        from tools.lazy_deps import FeatureUnavailable, ensure
+        from tools.lazy_deps import ensure
         ensure("tts.elevenlabs", prompt=False)
     except ImportError:
         # lazy_deps module itself missing — fall through to the raw import
@@ -115,10 +121,12 @@ def _import_elevenlabs():
     from elevenlabs.client import ElevenLabs
     return ElevenLabs
 
+
 def _import_openai_client():
     """Lazy import OpenAI client. Returns the class or raises ImportError."""
     from openai import OpenAI as OpenAIClient
     return OpenAIClient
+
 
 def _import_mistral_client():
     """Lazy import Mistral client. Returns the class or raises ImportError.
@@ -137,6 +145,7 @@ def _import_mistral_client():
         raise ImportError(str(e))
     from mistralai.client import Mistral
     return Mistral
+
 
 def _import_sounddevice():
     """Lazy import sounddevice. Returns the module or raises ImportError/OSError."""
@@ -195,9 +204,11 @@ GEMINI_TTS_SAMPLE_RATE = 24000
 GEMINI_TTS_CHANNELS = 1
 GEMINI_TTS_SAMPLE_WIDTH = 2  # 16-bit PCM (L16)
 
+
 def _get_default_output_dir() -> str:
     from hermes_constants import get_hermes_dir
     return str(get_hermes_dir("cache/audio", "audio_cache"))
+
 
 DEFAULT_OUTPUT_DIR = _get_default_output_dir()
 
@@ -884,7 +895,7 @@ def _convert_to_opus(mp3_path: str) -> Optional[str]:
             capture_output=True, timeout=30,
         )
         if result.returncode != 0:
-            logger.warning("ffmpeg conversion failed with return code %d: %s", 
+            logger.warning("ffmpeg conversion failed with return code %d: %s",
                           result.returncode, result.stderr.decode('utf-8', errors='ignore')[:200])
             return None
         if os.path.exists(ogg_path) and os.path.getsize(ogg_path) > 0:

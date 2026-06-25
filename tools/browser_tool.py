@@ -175,6 +175,7 @@ def _merge_browser_path(existing_path: str = "") -> str:
 
     return os.pathsep.join(prefix_parts + path_parts)
 
+
 # Throttle screenshot cleanup to avoid repeated full directory scans.
 _last_screenshot_cleanup_by_dir: dict[str, float] = {}
 
@@ -1032,7 +1033,7 @@ def _url_is_private(url: str) -> bool:
         # Hostname — must resolve to confirm it's private (bare "localhost"
         # resolves to 127.0.0.1 via /etc/hosts).  Short-circuit on obvious
         # names to avoid a DNS hop.
-        if hostname in {"localhost",} or hostname.endswith(".localhost"):
+        if hostname in {"localhost", } or hostname.endswith(".localhost"):
             return True
         if hostname.endswith(".local") or hostname.endswith(".lan") or hostname.endswith(".internal"):
             return True
@@ -1378,7 +1379,7 @@ def _reap_orphaned_browser_sessions():
 
         # Check if the daemon is still alive. ``os.kill(pid, 0)`` on Windows
         # is NOT a no-op — use the handle-based existence check.
-        from gateway.status import _pid_exists
+        from gateway.status import _pid_exists  # noqa: F402
         if not _pid_exists(daemon_pid):
             shutil.rmtree(socket_dir, ignore_errors=True)
             continue
@@ -1745,7 +1746,6 @@ def _get_session_info(task_id: Optional[str] = None) -> Dict[str, str]:
         _ensure_cdp_supervisor(task_id)
 
     return session_info
-
 
 
 def _find_agent_browser() -> str:
@@ -2743,9 +2743,6 @@ def browser_press(key: str, task_id: Optional[str] = None) -> str:
             "error": result.get("error", f"Failed to press {key}")
         }
         return json.dumps(_copy_fallback_warning(response, result), ensure_ascii=False)
-
-
-
 
 
 def browser_console(clear: bool = False, expression: Optional[str] = None, task_id: Optional[str] = None) -> str:

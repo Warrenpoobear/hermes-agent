@@ -411,6 +411,7 @@ class TestResolveApproval:
 # _handle_card_action_event — non-approval card actions
 # ===========================================================================
 
+
 class TestNonApprovalCardAction:
     """Non-approval card actions should still route as synthetic commands."""
 

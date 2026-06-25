@@ -27,10 +27,12 @@ E2E_MESSAGE_SETTLE_DELAY = 0.3
 # Platform library mocks
 
 # Ensure telegram module is available (mock it if not installed)
+
+
 def _ensure_telegram_mock():
     """Install mock telegram modules so TelegramAdapter can be imported."""
     if "telegram" in sys.modules and hasattr(sys.modules["telegram"], "__file__"):
-        return # Real library installed
+        return  # Real library installed
 
     telegram_mod = MagicMock()
     telegram_mod.Update = MagicMock()
@@ -59,7 +61,7 @@ def _ensure_telegram_mock():
 def _ensure_discord_mock():
     """Install mock discord modules so DiscordAdapter can be imported."""
     if "discord" in sys.modules and hasattr(sys.modules["discord"], "__file__"):
-        return # Real library installed
+        return  # Real library installed
 
     discord_mod = MagicMock()
     discord_mod.Intents.default.return_value = MagicMock()
@@ -164,7 +166,7 @@ def make_event(
     )
 
 
-def make_runner(platform: Platform, session_entry: SessionEntry = None) -> "GatewayRunner":
+def make_runner(platform: Platform, session_entry: SessionEntry = None) -> "GatewayRunner":  # noqa: F821
     """Create a GatewayRunner with mocked internals for e2e testing.
 
     Skips __init__ to avoid filesystem/network side effects.

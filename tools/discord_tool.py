@@ -50,6 +50,7 @@ _FLAG_GATEWAY_MESSAGE_CONTENT_LIMITED = 1 << 19
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_bot_token() -> Optional[str]:
     """Resolve the Discord bot token from environment."""
     return os.getenv("DISCORD_BOT_TOKEN", "").strip() or None
@@ -99,6 +100,7 @@ def _discord_request(
 
 class DiscordAPIError(Exception):
     """Raised when a Discord API call fails."""
+
     def __init__(self, status: int, body: str):
         self.status = status
         self.body = body

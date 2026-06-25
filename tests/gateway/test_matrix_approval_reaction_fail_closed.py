@@ -13,8 +13,6 @@ from collections import deque
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Stub mautrix so gateway.platforms.matrix can be imported without the SDK.

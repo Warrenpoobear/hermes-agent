@@ -98,6 +98,7 @@ _log = logging.getLogger(__name__)
 # when the same module is used across TestClient instances or uvicorn reloads.
 # ---------------------------------------------------------------------------
 
+
 @asynccontextmanager
 async def _lifespan(app: "FastAPI"):
     app.state.event_channels = {}  # dict[str, set]
@@ -490,7 +491,7 @@ def _build_schema_from_config(
         full_key = f"{prefix}.{key}" if prefix else key
 
         # Skip internal / version keys
-        if full_key in {"_config_version",}:
+        if full_key in {"_config_version", }:
             continue
 
         # Category is the first path component for nested keys, or "general"
@@ -600,7 +601,7 @@ def _audio_extension_for_mime(mime_type: str) -> str:
     return _AUDIO_MIME_EXTENSIONS.get(normalized, ".webm")
 
 
-class ModelAssignment(BaseModel):
+class ModelAssignment(BaseModel):  # noqa: F811
     """Payload for POST /api/model/set — assign a provider/model to a slot.
 
     scope="main"        → writes model.provider + model.default
@@ -2171,8 +2172,6 @@ async def set_model_assignment(body: ModelAssignment):
     except Exception:
         _log.exception("POST /api/model/set failed")
         raise HTTPException(status_code=500, detail="Failed to save model assignment")
-
-
 
 
 def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -3861,11 +3860,12 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
             MINIMAX_OAUTH_CLIENT_ID,
             MINIMAX_OAUTH_GLOBAL_BASE,
         )
-        import httpx
+        import httpx  # noqa: F811
         verifier, challenge, state = _minimax_pkce_pair()
         portal_base_url = (
             os.getenv("MINIMAX_PORTAL_BASE_URL") or MINIMAX_OAUTH_GLOBAL_BASE
         ).rstrip("/")
+
         def _do_minimax_request():
             with httpx.Client(
                 timeout=httpx.Timeout(15.0),
@@ -4307,7 +4307,6 @@ def _codex_full_login_worker(session_id: str) -> None:
         from hermes_cli.auth import (
             CODEX_OAUTH_CLIENT_ID,
             CODEX_OAUTH_TOKEN_URL,
-            DEFAULT_CODEX_BASE_URL,
         )
         issuer = "https://auth.openai.com"
 
@@ -4522,7 +4521,6 @@ async def cancel_oauth_session(session_id: str, request: Request):
 # ---------------------------------------------------------------------------
 # Session detail endpoints
 # ---------------------------------------------------------------------------
-
 
 
 def _session_latest_descendant(session_id: str):
@@ -4759,7 +4757,6 @@ async def get_session_detail(session_id: str):
         db.close()
 
 
-
 @app.get("/api/sessions/{session_id}/latest-descendant")
 async def get_session_latest_descendant(session_id: str):
     latest, path = _session_latest_descendant(session_id)
@@ -4771,6 +4768,7 @@ async def get_session_latest_descendant(session_id: str):
         "path": path,
         "changed": bool(path and latest != path[0]),
     }
+
 
 @app.get("/api/sessions/{session_id}/messages")
 async def get_session_messages(session_id: str):
@@ -5375,7 +5373,7 @@ async def install_mcp_catalog_entry(body: MCPCatalogInstall):
     # action path so the request returns immediately and the UI can tail logs.
     if entry.install is not None:
         try:
-            proc = _spawn_hermes_action(["mcp", "install", name], "mcp-install")
+            _spawn_hermes_action(["mcp", "install", name], "mcp-install")
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Install failed: {exc}")
         return {"ok": True, "name": name, "background": True, "action": "mcp-install"}
@@ -7087,13 +7085,12 @@ import re
 try:
     from hermes_cli.pty_bridge import PtyBridge, PtyUnavailableError
     _PTY_BRIDGE_AVAILABLE = True
-except ImportError as _pty_import_err:  # pragma: no cover - Windows-only path
+except ImportError as _pty_import_err:  # pragma: no cover - Windows-only path  # noqa: F841
     PtyBridge = None  # type: ignore[assignment]
     _PTY_BRIDGE_AVAILABLE = False
 
     class PtyUnavailableError(RuntimeError):  # type: ignore[no-redef]
         """Stub on platforms where pty_bridge can't be imported."""
-        pass
 
 _RESIZE_RE = re.compile(rb"\x1b\[RESIZE:(\d+);(\d+)\]")
 _PTY_READ_CHUNK_TIMEOUT = 0.2
@@ -7547,7 +7544,6 @@ async def pty_ws(ws: WebSocket) -> None:
         await ws.close(code=1011)
         return
 
-
     try:
         bridge = PtyBridge.spawn(argv, cwd=cwd, env=env)
     except PtyUnavailableError as exc:
@@ -7782,11 +7778,11 @@ def mount_spa(application: FastAPI):
         gated_js = "true" if gated else "false"
         if gated:
             bootstrap_script = (
-                f"<script>"
+                "<script>"
                 f"window.__HERMES_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
                 f'window.__HERMES_BASE_PATH__="{prefix}";'
                 f"window.__HERMES_AUTH_REQUIRED__={gated_js};"
-                f"</script>"
+                "</script>"
             )
         else:
             bootstrap_script = (
@@ -7794,7 +7790,7 @@ def mount_spa(application: FastAPI):
                 f"window.__HERMES_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
                 f'window.__HERMES_BASE_PATH__="{prefix}";'
                 f"window.__HERMES_AUTH_REQUIRED__={gated_js};"
-                f"</script>"
+                "</script>"
             )
         if prefix:
             # Rewrite absolute asset URLs baked into the Vite build so the
@@ -8802,24 +8798,24 @@ def start_server(
             if skip_reasons:
                 raise SystemExit(
                     f"Refusing to bind dashboard to {host} — the OAuth auth "
-                    f"gate engages on non-loopback binds, but no auth "
-                    f"providers are registered.\n"
-                    f"\n"
-                    f"Bundled providers reported these issues:\n"
+                    "gate engages on non-loopback binds, but no auth "
+                    "providers are registered.\n"
+                    "\n"
+                    "Bundled providers reported these issues:\n"
                     + "\n".join(skip_reasons)
                     + "\n"
-                    f"\n"
-                    f"Or pass --insecure to skip the auth gate (NOT "
-                    f"recommended on untrusted networks)."
+                    "\n"
+                    "Or pass --insecure to skip the auth gate (NOT "
+                    "recommended on untrusted networks)."
                 )
             raise SystemExit(
                 f"Refusing to bind dashboard to {host} — the OAuth auth "
-                f"gate engages on non-loopback binds, but no auth providers "
-                f"are registered and no bundled plugin reported a reason "
-                f"(was the dashboard_auth/nous plugin removed?).\n"
-                f"Install a DashboardAuthProvider plugin, or pass --insecure "
-                f"to skip the auth gate (NOT recommended on untrusted "
-                f"networks)."
+                "gate engages on non-loopback binds, but no auth providers "
+                "are registered and no bundled plugin reported a reason "
+                "(was the dashboard_auth/nous plugin removed?).\n"
+                "Install a DashboardAuthProvider plugin, or pass --insecure "
+                "to skip the auth gate (NOT recommended on untrusted "
+                "networks)."
             )
         _log.info(
             "Dashboard binding to %s with OAuth auth gate enabled. "

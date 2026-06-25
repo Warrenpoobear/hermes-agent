@@ -292,7 +292,8 @@ class TestDoctorMemoryProviderSection:
         except Exception:
             pass
 
-        import io, contextlib
+        import io
+        import contextlib
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             doctor_mod.run_doctor(Namespace(fix=False))
@@ -540,8 +541,6 @@ def test_run_doctor_accepts_hermes_provider_ids_that_catalog_aliases(
         )
 
 
-
-
 def test_run_doctor_accepts_kimi_coding_cn_provider(monkeypatch, tmp_path):
     home = tmp_path / ".hermes"
     home.mkdir(parents=True, exist_ok=True)
@@ -612,7 +611,8 @@ def test_run_doctor_termux_does_not_mark_browser_available_without_agent_browser
     except Exception:
         pass
 
-    import io, contextlib
+    import io
+    import contextlib
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         doctor_mod.run_doctor(Namespace(fix=False))
@@ -661,7 +661,8 @@ def test_run_doctor_kimi_cn_env_is_detected_and_probe_is_null_safe(monkeypatch, 
     import httpx
     monkeypatch.setattr(httpx, "get", fake_get)
 
-    import io, contextlib
+    import io
+    import contextlib
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         doctor_mod.run_doctor(Namespace(fix=False))
@@ -769,7 +770,8 @@ def test_run_doctor_opencode_go_skips_invalid_models_probe(monkeypatch, tmp_path
     import httpx
     monkeypatch.setattr(httpx, "get", fake_get)
 
-    import io, contextlib
+    import io
+    import contextlib
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         doctor_mod.run_doctor(Namespace(fix=False))
@@ -793,7 +795,8 @@ class TestGitHubTokenCheck:
         monkeypatch.setenv("PATH", "/nonexistent")  # gh not found
 
         from hermes_cli.doctor import run_doctor
-        import io, contextlib
+        import io
+        import contextlib
 
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
@@ -811,7 +814,8 @@ class TestGitHubTokenCheck:
         monkeypatch.setenv("PATH", "/nonexistent")  # gh not found
 
         from hermes_cli.doctor import run_doctor
-        import io, contextlib
+        import io
+        import contextlib
 
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
@@ -831,11 +835,13 @@ class TestGitHubTokenCheck:
         # Mock gh to return success
         import shutil
         real_which = shutil.which
+
         def mock_which(cmd):
             return "/usr/local/bin/gh" if cmd == "gh" else real_which(cmd)
         monkeypatch.setattr(shutil, "which", mock_which)
 
         call_log = []
+
         def mock_run(cmd, **kwargs):
             call_log.append(cmd)
             if cmd[:2] == ["gh", "auth"]:
@@ -848,7 +854,8 @@ class TestGitHubTokenCheck:
         monkeypatch.setattr(subprocess, "run", mock_run)
 
         from hermes_cli.doctor import run_doctor
-        import io, contextlib
+        import io
+        import contextlib
 
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
@@ -1289,7 +1296,6 @@ class TestDoctorStaleMaxIterationsDrift:
 
     def _run_config_section(self, monkeypatch, tmp_path, *, fix, ghost, cfg_turns,
                             os_environ_value=None):
-        import pathlib
         import contextlib
         import io
         from argparse import Namespace

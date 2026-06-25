@@ -299,7 +299,7 @@ def test_dispatcher_tick_does_not_call_init_db(kanban_home, monkeypatch):
     import hermes_cli.kanban_db as kb
     from gateway.run import GatewayRunner
 
-    runner = object.__new__(GatewayRunner)
+    runner = object.__new__(GatewayRunner)  # noqa: F841
 
     init_db_calls: list[object] = []
     real_init_db = kb.init_db

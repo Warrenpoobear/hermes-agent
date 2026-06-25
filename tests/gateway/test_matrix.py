@@ -1668,7 +1668,7 @@ class TestMatrixEncryptedEventHandler:
         # Verify event handlers were registered.
         # In mautrix the order is: add_event_handler(EventType, callback)
         handler_calls = mock_client.add_event_handler.call_args_list
-        registered_types = [call.args[0] for call in handler_calls]
+        registered_types = [call.args[0] for call in handler_calls]  # noqa: F841
 
         # Should have registered handlers for ROOM_MESSAGE, REACTION, INVITE
         assert len(handler_calls) >= 3
@@ -2286,6 +2286,7 @@ class TestMatrixImageOnlyMediaNormalization:
 # Message redaction
 # ---------------------------------------------------------------------------
 
+
 class TestMatrixRedaction:
     def setup_method(self):
         self.adapter = _make_adapter()
@@ -2771,7 +2772,6 @@ class TestMatrixDmAutoThread:
         assert ctx is not None
         _body, _is_dm, _chat_type, thread_id, _display, _source = ctx
         assert thread_id is None
-
 
 
 # ---------------------------------------------------------------------------

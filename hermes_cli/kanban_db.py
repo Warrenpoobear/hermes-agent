@@ -238,6 +238,7 @@ def scoped_current_board(slug: str):
     finally:
         _CURRENT_BOARD_OVERRIDE.reset(token)
 
+
 # Slug validator: lowercase alphanumerics, digits, hyphens; 1–64 chars.
 # Strict enough to stop traversal (`..`) and embedded path separators, loose
 # enough that kebab-case names like ``atm10-server`` or ``hermes-agent``
@@ -4099,7 +4100,6 @@ def block_task(
         return True
 
 
-
 def promote_task(
     conn: sqlite3.Connection,
     task_id: str,
@@ -5273,9 +5273,8 @@ def detect_stale_running(
     if stale_timeout_seconds <= 0:
         return []
 
-
     now = int(time.time())
-    host_prefix = f"{_claimer_id().split(':', 1)[0]}:"
+    host_prefix = f"{_claimer_id().split(':', 1)[0]}:"  # noqa: F841
     reclaimed: list[str] = []
 
     rows = conn.execute(
@@ -5624,7 +5623,7 @@ def _record_task_failure(
         if row is None:
             return False
         failures = int(row["consecutive_failures"]) + 1
-        cur_status = row["status"]
+        row["status"]
 
         # Per-task override wins over both caller-supplied and default
         # thresholds. None (the common case) falls through.

@@ -97,20 +97,17 @@ def check_packages():
 
     # Optional: local STT
     try:
-        import faster_whisper
         check("faster-whisper (local STT)", True)
     except ImportError:
         warn("faster-whisper (local STT)", "not installed — local STT unavailable")
 
     # Optional: TTS providers
     try:
-        import edge_tts
         check("edge-tts", True)
     except ImportError:
         warn("edge-tts", "not installed — edge TTS unavailable")
 
     try:
-        import elevenlabs
         check("elevenlabs SDK", True)
     except ImportError:
         warn("elevenlabs SDK", "not installed — premium TTS unavailable")
@@ -137,7 +134,7 @@ def check_system_tools():
                         "/opt/homebrew/lib/libopus.dylib",   # macOS Apple Silicon
                         "/usr/local/lib/libopus.dylib",      # macOS Intel
                         "/usr/lib/x86_64-linux-gnu/libopus.so.0",  # Debian/Ubuntu x86
-                        "/usr/lib/aarch64-linux-gnu/libopus.so.0", # Debian/Ubuntu ARM
+                        "/usr/lib/aarch64-linux-gnu/libopus.so.0",  # Debian/Ubuntu ARM
                         "/usr/lib/libopus.so",               # Arch Linux
                         "/usr/lib64/libopus.so",             # RHEL/Fedora
                     ]

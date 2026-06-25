@@ -92,12 +92,12 @@ def get_hermes_home() -> Path:
             # configured, and (b) root-logger propagation would double-emit
             # on consoles where a StreamHandler is already attached.
             msg = (
-                f"[HERMES_HOME fallback] HERMES_HOME is unset but active "
+                "[HERMES_HOME fallback] HERMES_HOME is unset but active "
                 f"profile is {active!r}. Falling back to {fallback_home}, which "
                 f"is the DEFAULT profile — not {active!r}. Any data this "
-                f"process writes will land in the wrong profile. The "
-                f"subprocess spawner should pass HERMES_HOME explicitly "
-                f"(see issue #18594)."
+                "process writes will land in the wrong profile. The "
+                "subprocess spawner should pass HERMES_HOME explicitly "
+                "(see issue #18594)."
             )
             try:
                 sys.stderr.write(msg + "\n")
@@ -406,7 +406,6 @@ def get_config_path() -> Path:
 def get_skills_dir() -> Path:
     """Return the path to the skills directory under HERMES_HOME."""
     return get_hermes_home() / "skills"
-
 
 
 def get_env_path() -> Path:

@@ -556,6 +556,7 @@ class TestToolHandler:
 
         try:
             handler = _make_tool_handler("test_srv", "greet", 120)
+
             def _interrupting_run(coro_or_factory, timeout=30):
                 coro = coro_or_factory() if callable(coro_or_factory) else coro_or_factory
                 coro.close()
@@ -1134,7 +1135,7 @@ class TestToolsetInjection:
             result1 = discover_mcp_tools()
             assert "mcp_good_ping" in result1
             assert "mcp_broken_ping" not in result1
-            first_attempts = call_count
+            first_attempts = call_count  # noqa: F841
 
             # "Fix" the broken server
             broken_fixed = True
@@ -1270,6 +1271,7 @@ class TestShutdown:
         for i in range(3):
             mock_server = MagicMock()
             mock_server.name = f"srv_{i}"
+
             async def slow_shutdown():
                 await asyncio.sleep(1)
             mock_server.shutdown = slow_shutdown

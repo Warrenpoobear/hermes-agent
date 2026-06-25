@@ -188,7 +188,6 @@ def test_random_strategy_uses_random_choice(tmp_path, monkeypatch):
     assert selected.id == "cred-2"
 
 
-
 def test_exhausted_entry_resets_after_ttl(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
     _write_auth_store(
@@ -803,7 +802,6 @@ def test_load_pool_seeds_env_api_key(tmp_path, monkeypatch):
     assert entry.access_token == "sk-or-seeded"
 
 
-
 def test_load_pool_does_not_persist_env_seeded_secret_value(tmp_path, monkeypatch):
     """Runtime env keys may be used in memory but must not land in auth.json."""
     sentinel = "S3NTINEL_DO_NOT_PERSIST_OPENROUTER"
@@ -829,7 +827,6 @@ def test_load_pool_does_not_persist_env_seeded_secret_value(tmp_path, monkeypatc
     assert persisted["priority"] == 0
     assert "access_token" not in persisted
     assert persisted["secret_fingerprint"].startswith("sha256:")
-
 
 
 def test_load_pool_persists_bitwarden_origin_metadata_without_secret(tmp_path, monkeypatch):
@@ -858,7 +855,6 @@ def test_load_pool_persists_bitwarden_origin_metadata_without_secret(tmp_path, m
     assert persisted["source"] == "env:OPENROUTER_API_KEY"
     assert persisted["secret_source"] == "bitwarden"
     assert "access_token" not in persisted
-
 
 
 def test_load_pool_sanitizes_legacy_raw_borrowed_entry_when_value_unchanged(tmp_path, monkeypatch):
@@ -899,7 +895,6 @@ def test_load_pool_sanitizes_legacy_raw_borrowed_entry_when_value_unchanged(tmp_
     assert persisted["id"] == "legacy-env"
     assert "access_token" not in persisted
     assert persisted["secret_fingerprint"].startswith("sha256:")
-
 
 
 def test_pooled_credential_to_dict_strips_borrowed_secret_fields():
@@ -953,7 +948,6 @@ def test_pooled_credential_to_dict_strips_borrowed_secret_fields():
     assert payload["secret_fingerprint"].startswith("sha256:")
 
 
-
 @pytest.mark.parametrize("source", [
     "age://openrouter/api-key",
     "systemd",
@@ -988,7 +982,6 @@ def test_borrowed_source_variants_strip_secret_fields(source):
     assert payload["secret_fingerprint"].startswith("sha256:")
 
 
-
 def test_load_pool_prunes_stale_borrowed_custom_config_entry(tmp_path, monkeypatch):
     sentinel = "S3NTINEL_DO_NOT_PERSIST_STALE_CUSTOM"
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
@@ -1020,7 +1013,6 @@ def test_load_pool_prunes_stale_borrowed_custom_config_entry(tmp_path, monkeypat
     auth_text = (tmp_path / "hermes" / "auth.json").read_text()
     assert sentinel not in auth_text
     assert json.loads(auth_text)["credential_pool"]["custom:foo"] == []
-
 
 
 def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_path, monkeypatch):
@@ -1067,7 +1059,6 @@ def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_p
     assert manual["access_token"] == manual_secret
 
 
-
 def test_write_credential_pool_treats_unowned_oauth_source_as_borrowed(tmp_path, monkeypatch):
     sentinel = "S3NTINEL_DO_NOT_PERSIST_UNOWNED_OAUTH"
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
@@ -1095,7 +1086,6 @@ def test_write_credential_pool_treats_unowned_oauth_source_as_borrowed(tmp_path,
     assert persisted["secret_fingerprint"].startswith("sha256:")
 
 
-
 def test_write_credential_pool_preserves_known_provider_owned_oauth_state(tmp_path, monkeypatch):
     sentinel = "PROVIDER_OWNED_DEVICE_CODE_STAYS_PERSISTABLE"
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
@@ -1119,7 +1109,6 @@ def test_write_credential_pool_preserves_known_provider_owned_oauth_state(tmp_pa
     assert persisted["access_token"] == sentinel
     assert persisted["refresh_token"] == f"refresh-{sentinel}"
     assert persisted["agent_key"] == f"agent-{sentinel}"
-
 
 
 def test_load_pool_prefers_dotenv_over_stale_os_environ(tmp_path, monkeypatch):
@@ -2125,7 +2114,6 @@ def test_list_custom_pool_providers(tmp_path, monkeypatch):
     # "custom:empty" not included because it's empty
 
 
-
 def test_acquire_lease_prefers_unleased_entry(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
     _write_auth_store(
@@ -2165,7 +2153,6 @@ def test_acquire_lease_prefers_unleased_entry(tmp_path, monkeypatch):
     assert second == "cred-2"
     assert pool._active_leases.get("cred-1", 0) == 1
     assert pool._active_leases.get("cred-2", 0) == 1
-
 
 
 def test_release_lease_decrements_counter(tmp_path, monkeypatch):
@@ -2476,6 +2463,7 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
     assert synced.agent_key == "agent-key-NEW"
     assert synced.agent_key_expires_at == "2026-03-24T14:00:00+00:00"
 
+
 def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
     """When auth.json has the same refresh token, sync should be a no-op."""
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
@@ -2509,6 +2497,7 @@ def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
 
     synced = pool._sync_nous_entry_from_auth_store(entry)
     assert synced is entry
+
 
 def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch):
     """An exhausted Nous entry should recover when auth.json has newer tokens."""
@@ -2864,7 +2853,7 @@ def test_xai_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypatch
 # ---------------------------------------------------------------------------
 
 
-def _codex_auth_store(access_token: str, refresh_token: str) -> dict:
+def _codex_auth_store(access_token: str, refresh_token: str) -> dict:  # noqa: F811
     return {
         "version": 1,
         "active_provider": "openai-codex",

@@ -88,7 +88,7 @@ class TestHandleBackgroundCommand:
 
         # Patch asyncio.create_task to capture the coroutine
         created_tasks = []
-        original_create_task = asyncio.create_task
+        asyncio.create_task
 
         def capture_task(coro, *args, **kwargs):
             # Close the coroutine to avoid warnings

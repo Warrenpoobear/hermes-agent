@@ -723,7 +723,8 @@ class TestExternalSkillMutations:
     def test_patch_external_skill_writes_in_place(self, tmp_path):
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         skill_dir = _write_external_skill(external)
 
         with _two_roots(local, external):
@@ -737,7 +738,8 @@ class TestExternalSkillMutations:
     def test_edit_external_skill_writes_in_place(self, tmp_path):
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         skill_dir = _write_external_skill(external)
 
         new_content = (
@@ -754,7 +756,8 @@ class TestExternalSkillMutations:
     def test_write_file_on_external_skill(self, tmp_path):
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         skill_dir = _write_external_skill(external)
 
         with _two_roots(local, external):
@@ -767,7 +770,8 @@ class TestExternalSkillMutations:
     def test_remove_file_on_external_skill(self, tmp_path):
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         skill_dir = _write_external_skill(external)
         (skill_dir / "references").mkdir()
         (skill_dir / "references" / "notes.md").write_text("# Notes\n")
@@ -781,7 +785,8 @@ class TestExternalSkillMutations:
     def test_delete_external_skill_removes_skill_not_root(self, tmp_path):
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         skill_dir = _write_external_skill(external)
 
         with _two_roots(local, external):
@@ -798,7 +803,8 @@ class TestExternalSkillMutations:
         stop at the external root."""
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
         cat_dir = external / "team"
         cat_dir.mkdir()
         skill_dir = cat_dir / "ext-skill"
@@ -821,7 +827,8 @@ class TestExternalSkillMutations:
         external_dirs — create is unchanged by this PR."""
         local = tmp_path / "local"
         external = tmp_path / "vault"
-        local.mkdir(); external.mkdir()
+        local.mkdir()
+        external.mkdir()
 
         with _two_roots(local, external):
             result = _create_skill("fresh-skill", VALID_SKILL_CONTENT.replace(
@@ -830,7 +837,6 @@ class TestExternalSkillMutations:
         assert result["success"] is True, result
         assert (local / "fresh-skill" / "SKILL.md").exists()
         assert not (external / "fresh-skill").exists()
-
 
 
 # ---------------------------------------------------------------------------

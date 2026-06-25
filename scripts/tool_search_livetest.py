@@ -30,7 +30,7 @@ import tempfile
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 # Force-isolate the test environment BEFORE any hermes imports.
 ORIGINAL_HOME = os.environ.get("HERMES_HOME")
@@ -52,7 +52,7 @@ FAKE_MCP_TOOLS: List[Dict[str, Any]] = [
         "params": {"repo": ("string", "Repository in owner/name form"),
                    "title": ("string", "Issue title"),
                    "body": ("string", "Issue body in Markdown")},
-        "returns": lambda args: {"ok": True, "issue_url": f"https://github.com/{args.get('repo','x/y')}/issues/42"},
+        "returns": lambda args: {"ok": True, "issue_url": f"https://github.com/{args.get('repo', 'x/y')}/issues/42"},
     },
     {
         "name": "github_search_repos",

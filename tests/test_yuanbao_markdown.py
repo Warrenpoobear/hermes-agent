@@ -304,14 +304,14 @@ def test_table_not_broken():
 
 
 def test_has_unclosed_fence():
-    assert MarkdownProcessor.has_unclosed_fence("```python\ncode") == True
-    assert MarkdownProcessor.has_unclosed_fence("```python\ncode\n```") == False
-    assert MarkdownProcessor.has_unclosed_fence("no fence") == False
+    assert MarkdownProcessor.has_unclosed_fence("```python\ncode") is True
+    assert MarkdownProcessor.has_unclosed_fence("```python\ncode\n```") is False
+    assert MarkdownProcessor.has_unclosed_fence("no fence") is False
 
 
 def test_ends_with_table_row():
-    assert MarkdownProcessor.ends_with_table_row("| a | b |") == True
-    assert MarkdownProcessor.ends_with_table_row("normal text") == False
+    assert MarkdownProcessor.ends_with_table_row("| a | b |") is True
+    assert MarkdownProcessor.ends_with_table_row("normal text") is False
 
 
 def test_empty_text():

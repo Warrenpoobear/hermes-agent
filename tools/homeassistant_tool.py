@@ -35,6 +35,7 @@ def _get_config():
         _HASS_TOKEN or os.getenv("HASS_TOKEN", ""),
     )
 
+
 # Regex for valid HA entity_id format (e.g. "light.living_room", "sensor.temperature_1")
 _ENTITY_ID_RE = re.compile(r"^[a-z_][a-z0-9_]*\.[a-z0-9_]+$")
 

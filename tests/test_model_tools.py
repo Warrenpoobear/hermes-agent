@@ -179,7 +179,7 @@ class TestPreToolCallBlocking:
             return []
 
         dispatch_called = False
-        _orig_dispatch = None
+        _orig_dispatch = None  # noqa: F841
 
         def fake_dispatch(*args, **kwargs):
             nonlocal dispatch_called

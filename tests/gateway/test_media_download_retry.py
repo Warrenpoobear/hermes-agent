@@ -22,6 +22,7 @@ import httpx
 # Helpers for building httpx exceptions
 # ---------------------------------------------------------------------------
 
+
 def _make_http_status_error(status_code: int) -> httpx.HTTPStatusError:
     request = httpx.Request("GET", "http://example.com/img.jpg")
     response = httpx.Response(status_code=status_code, request=request)

@@ -710,7 +710,7 @@ class TestGetDueJobs:
         assert len(due) == 0
 
     def test_disabled_not_returned(self, tmp_cron_dir):
-        job = create_job(prompt="Disabled", schedule="every 1h")
+        job = create_job(prompt="Disabled", schedule="every 1h")  # noqa: F841
         jobs = load_jobs()
         jobs[0]["enabled"] = False
         jobs[0]["next_run_at"] = (datetime.now() - timedelta(minutes=5)).isoformat()

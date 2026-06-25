@@ -29,6 +29,7 @@ from tools.file_tools import (
 
 class _FakeReadResult:
     """Minimal stand-in for FileOperations.read_file return value."""
+
     def __init__(self, content="line1\nline2\n", total_lines=2):
         self.content = content
         self._total_lines = total_lines
@@ -43,6 +44,7 @@ def _fake_read_file(path, offset=1, limit=500):
 
 class _FakeSearchResult:
     """Minimal stand-in for FileOperations.search return value."""
+
     def __init__(self):
         self.matches = []
 
@@ -189,9 +191,6 @@ class TestNotifyOtherToolCall(unittest.TestCase):
     def test_notify_on_unknown_task_is_safe(self, _mock_ops):
         """notify_other_tool_call on a task that hasn't read anything is a no-op."""
         notify_other_tool_call("nonexistent_task")  # Should not raise
-
-
-
 
 
 class TestSearchLoopDetection(unittest.TestCase):

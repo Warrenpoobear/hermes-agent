@@ -1108,6 +1108,7 @@ class TestImagegenModelPicker:
 
         # Only ONE picker call is expected (for model) — not two (model + quality).
         call_count = {"n": 0}
+
         def fake_prompt(*a, **kw):
             call_count["n"] += 1
             return gpt_idx
@@ -1175,7 +1176,7 @@ def test_save_platform_tools_clears_no_mcp_sentinel():
     assert "no_mcp" not in saved
 
 
-def test_save_platform_tools_preserves_mcp_server_names():
+def test_save_platform_tools_preserves_mcp_server_names():  # noqa: F811
     """Non-sentinel passthrough entries (MCP server names) must still survive
     the save — we only clear `no_mcp`, not every non-configurable entry.
     """
@@ -1550,5 +1551,3 @@ def test_real_configurable_changes_still_reported_in_diff():
     # User adds 'vision' (configurable) — must still report as added.
     new_enabled2 = (current - {"kanban"}) | {"vision"}
     assert ((new_enabled2 - current) & universe) == {"vision"}
-
-

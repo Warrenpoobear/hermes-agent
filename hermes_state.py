@@ -226,6 +226,7 @@ def _log_wal_fallback_once(db_label: str, exc: Exception) -> None:
         exc,
     )
 
+
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER NOT NULL
@@ -482,7 +483,7 @@ class SessionDB:
     def _fts_trigger_count(cursor: sqlite3.Cursor) -> int:
         placeholders = ",".join("?" for _ in _FTS_TRIGGERS)
         row = cursor.execute(
-            f"SELECT COUNT(*) FROM sqlite_master "
+            "SELECT COUNT(*) FROM sqlite_master "
             f"WHERE type = 'trigger' AND name IN ({placeholders})",
             _FTS_TRIGGERS,
         ).fetchone()
@@ -942,6 +943,7 @@ class SessionDB:
         """Create a new session record. Returns the session_id."""
         self._insert_session_row(session_id, source, **kwargs)
         return session_id
+
     def end_session(self, session_id: str, end_reason: str) -> None:
         """Mark a session as ended.
 
@@ -999,6 +1001,7 @@ class SessionDB:
     # the compress() call plus the rotation. ``holder`` identifies the
     # current owner (pid:tid:nonce) for diagnostics; the lock is recovered
     # via ``expires_at`` if the holder process crashed without releasing.
+
     def try_acquire_compression_lock(
         self,
         session_id: str,
@@ -1103,7 +1106,6 @@ class SessionDB:
         if row is None:
             return None
         return row["holder"] if isinstance(row, sqlite3.Row) else row[0]
-
 
     def update_system_prompt(self, session_id: str, system_prompt: str) -> None:
         """Store the full assembled system prompt snapshot."""
@@ -1223,6 +1225,7 @@ class SessionDB:
             api_call_count,
             session_id,
         )
+
         def _do(conn):
             conn.execute(sql, params)
         self._execute_write(_do)
@@ -1399,6 +1402,7 @@ class SessionDB:
         Empty/whitespace-only strings are normalized to None (clearing the title).
         """
         title = self.sanitize_title(title)
+
         def _do(conn):
             if title:
                 # Check uniqueness (allow the same session to keep its own title)
@@ -1678,10 +1682,10 @@ class SessionDB:
                     + "%"
                 )
                 id_params = [like_pattern]
-                outer_where = (
+                outer_where = (  # noqa: F841
                     f"{where_sql} AND {id_clause}" if where_sql else f"WHERE {id_clause}"
                 )
-            query = f"""
+            query = """
                 WITH RECURSIVE chain(root_id, cur_id) AS (
                     SELECT s.id, s.id FROM sessions s {where_sql}
                     UNION ALL
@@ -1725,7 +1729,7 @@ class SessionDB:
             # only applies to the outer select.
             params = params + params + id_params + [limit, offset]
         else:
-            query = f"""
+            query = """
                 SELECT s.*,
                     COALESCE(
                         (SELECT SUBSTR(REPLACE(REPLACE(m.content, X'0A', ' '), X'0D', ' '), 1, 63)
@@ -2255,18 +2259,18 @@ class SessionDB:
                     role_params = list(keep_roles)
 
                 bookend_start_rows = self._conn.execute(
-                    f"SELECT * FROM messages "
+                    "SELECT * FROM messages "
                     f"WHERE session_id = ? AND id < ?{role_clause} "
-                    f"AND length(content) > 0 "
-                    f"ORDER BY id ASC LIMIT ?",
+                    "AND length(content) > 0 "
+                    "ORDER BY id ASC LIMIT ?",
                     (session_id, window_min_id, *role_params, bookend),
                 ).fetchall()
 
                 bookend_end_rows = self._conn.execute(
-                    f"SELECT * FROM messages "
+                    "SELECT * FROM messages "
                     f"WHERE session_id = ? AND id > ?{role_clause} "
-                    f"AND length(content) > 0 "
-                    f"ORDER BY id DESC LIMIT ?",
+                    "AND length(content) > 0 "
+                    "ORDER BY id DESC LIMIT ?",
                     (session_id, window_max_id, *role_params, bookend),
                 ).fetchall()
                 # End rows came back DESC for the LIMIT cap; flip to ASC.
@@ -2529,7 +2533,7 @@ class SessionDB:
         target_row = dict(row)
         if target_row.get("role") != "user":
             raise ValueError(
-                f"rewind target must be a 'user' message (got role="
+                "rewind target must be a 'user' message (got role="
                 f"{target_row.get('role')!r}, id={target_message_id})"
             )
 
@@ -2709,7 +2713,6 @@ class SessionDB:
 
         return sanitized.strip()
 
-
     @staticmethod
     def _is_cjk_codepoint(cp: int) -> bool:
         return (0x4E00 <= cp <= 0x9FFF or    # CJK Unified Ideographs
@@ -2798,11 +2801,11 @@ class SessionDB:
         # ORDER BY shared across the main FTS5 path and trigram CJK path.
         # With sort set, timestamp is primary and rank is the tiebreaker.
         if sort_norm == "newest":
-            order_by_sql = "ORDER BY m.timestamp DESC, rank"
+            pass
         elif sort_norm == "oldest":
-            order_by_sql = "ORDER BY m.timestamp ASC, rank"
+            pass
         else:
-            order_by_sql = "ORDER BY rank"
+            pass
 
         # Build WHERE clauses dynamically
         where_clauses = ["messages_fts MATCH ?"]
@@ -2825,10 +2828,10 @@ class SessionDB:
             where_clauses.append(f"m.role IN ({role_placeholders})")
             params.extend(role_filter)
 
-        where_sql = " AND ".join(where_clauses)
+        " AND ".join(where_clauses)
         params.extend([limit, offset])
 
-        sql = f"""
+        sql = """
             SELECT
                 m.id,
                 m.session_id,
@@ -2899,7 +2902,7 @@ class SessionDB:
                 if role_filter:
                     tri_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
                     tri_params.extend(role_filter)
-                tri_sql = f"""
+                tri_sql = """
                     SELECT
                         m.id,
                         m.session_id,
@@ -2954,7 +2957,7 @@ class SessionDB:
                 if role_filter:
                     like_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
                     like_params.extend(role_filter)
-                like_sql = f"""
+                like_sql = """
                     SELECT m.id, m.session_id, m.role,
                            substr(m.content,
                                   max(1, instr(m.content, ?) - 40),
@@ -3334,7 +3337,7 @@ class SessionDB:
             # of survivors — the IN list on ``parent_session_id`` does
             # exactly this.
             conn.execute(
-                f"UPDATE sessions SET parent_session_id = NULL "
+                "UPDATE sessions SET parent_session_id = NULL "
                 f"WHERE parent_session_id IN ({existing_placeholders})",
                 existing,
             )
@@ -3424,7 +3427,7 @@ class SessionDB:
 
             placeholders = ",".join("?" * len(session_ids))
             conn.execute(
-                f"UPDATE sessions SET parent_session_id = NULL "
+                "UPDATE sessions SET parent_session_id = NULL "
                 f"WHERE parent_session_id IN ({placeholders})",
                 list(session_ids),
             )
@@ -3484,7 +3487,7 @@ class SessionDB:
             # Orphan any sessions whose parent is about to be deleted
             placeholders = ",".join("?" * len(session_ids))
             conn.execute(
-                f"UPDATE sessions SET parent_session_id = NULL "
+                "UPDATE sessions SET parent_session_id = NULL "
                 f"WHERE parent_session_id IN ({placeholders})",
                 list(session_ids),
             )

@@ -287,8 +287,8 @@ def _require_tty(command_name: str) -> None:
     if not sys.stdin.isatty():
         print(
             f"Error: 'hermes {command_name}' requires an interactive terminal.\n"
-            f"It cannot be run through a pipe or non-interactive subprocess.\n"
-            f"Run it directly in your terminal instead.",
+            "It cannot be run through a pipe or non-interactive subprocess.\n"
+            "Run it directly in your terminal instead.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -911,10 +911,10 @@ def _session_browse_picker(sessions: list) -> Optional[str]:
                 stdscr.refresh()
                 key = stdscr.getch()
 
-                if key in {curses.KEY_UP,}:
+                if key in {curses.KEY_UP, }:
                     if filtered:
                         cursor = (cursor - 1) % len(filtered)
-                elif key in {curses.KEY_DOWN,}:
+                elif key in {curses.KEY_DOWN, }:
                     if filtered:
                         cursor = (cursor + 1) % len(filtered)
                 elif key in {curses.KEY_ENTER, 10, 13}:
@@ -1066,19 +1066,19 @@ def _exec_in_container(container_info: dict, cli_args: list):
             if probe2.returncode != 0:
                 print(
                     f"Error: container '{container_name}' not found via {backend}.\n"
-                    f"\n"
-                    f"The container is likely running as root. Your user cannot see it\n"
+                    "\n"
+                    "The container is likely running as root. Your user cannot see it\n"
                     f"because {backend} uses per-user namespaces. Grant passwordless\n"
                     f"sudo for {backend} — the -n (non-interactive) flag is required\n"
-                    f"because a password prompt would hang or break piped commands.\n"
-                    f"\n"
-                    f"On NixOS:\n"
-                    f"\n"
+                    "because a password prompt would hang or break piped commands.\n"
+                    "\n"
+                    "On NixOS:\n"
+                    "\n"
                     f"  security.sudo.extraRules = [{{\n"
                     f'    users = [ "{os.getenv("USER", "your-user")}" ];\n'
                     f'    commands = [{{ command = "{runtime}"; options = [ "NOPASSWD" ]; }}];\n'
                     f"  }}];\n"
-                    f"\n"
+                    "\n"
                     f"Or run: sudo hermes {' '.join(cli_args)}",
                     file=sys.stderr,
                 )
@@ -1503,8 +1503,8 @@ def _make_tui_argv(tui_dir: Path, tui_dev: bool) -> tuple[list[str], Path]:
     if tui_dev and ext_dir:
         print(
             f"Error: --dev is incompatible with HERMES_TUI_DIR={ext_dir}\n"
-            f"The prebuilt TUI has no source code to hot-reload.\n"
-            f"Unset HERMES_TUI_DIR (e.g. `unset HERMES_TUI_DIR`) to use --dev from a checkout.",
+            "The prebuilt TUI has no source code to hot-reload.\n"
+            "Unset HERMES_TUI_DIR (e.g. `unset HERMES_TUI_DIR`) to use --dev from a checkout.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -2444,6 +2444,7 @@ def select_provider_and_model(args=None):
         config_provider or os.getenv("HERMES_INFERENCE_PROVIDER") or "auto"
     )
     compatible_custom_providers = get_compatible_custom_providers(config)
+
     def _named_custom_provider_map(cfg) -> dict[str, dict[str, str]]:
         from hermes_cli.config import read_raw_config
 
@@ -3948,8 +3949,8 @@ def _model_flow_custom(config):
     )
     if _looks_local and not _url_lower.endswith("/v1"):
         print()
-        print(f"  Hint: Did you mean to add /v1 at the end?")
-        print(f"  Most local model servers (Ollama, vLLM, llama.cpp) require it.")
+        print("  Hint: Did you mean to add /v1 at the end?")
+        print("  Most local model servers (Ollama, vLLM, llama.cpp) require it.")
         print(f"  e.g. {effective_url.rstrip('/')}/v1")
         try:
             _add_v1 = input("  Add /v1? [Y/n]: ").strip().lower()
@@ -3968,7 +3969,7 @@ def _model_flow_custom(config):
     if probe.get("used_fallback") and probe.get("resolved_base_url"):
         print(
             f"Warning: endpoint verification worked at {probe['resolved_base_url']}/models, "
-            f"not the exact URL you entered. Saving the working base URL instead."
+            "not the exact URL you entered. Saving the working base URL instead."
         )
         effective_url = probe["resolved_base_url"]
         if base_url:
@@ -3981,7 +3982,7 @@ def _model_flow_custom(config):
     else:
         print(
             f"Warning: could not verify this endpoint via {probe.get('probed_url')}. "
-            f"Hermes will still save it."
+            "Hermes will still save it."
         )
         if probe.get("suggested_base_url"):
             suggested = probe["suggested_base_url"]
@@ -4368,7 +4369,7 @@ def _model_flow_azure_foundry(config, current_model=""):
         )
         print(f"  Current API mode:  {_lbl}")
     if current_auth_mode == "entra_id":
-        print(f"  Current auth mode: Microsoft Entra ID (keyless)")
+        print("  Current auth mode: Microsoft Entra ID (keyless)")
     elif current_api_key:
         print(f"  Current auth mode: API key ({current_api_key[:8]}...)")
     print()
@@ -5414,7 +5415,7 @@ def _model_flow_kimi(config, current_model=""):
 
     provider_id = "kimi-coding"
     pconfig = PROVIDER_REGISTRY[provider_id]
-    key_env = pconfig.api_key_env_vars[0] if pconfig.api_key_env_vars else ""
+    key_env = pconfig.api_key_env_vars[0] if pconfig.api_key_env_vars else ""  # noqa: F841
     base_url_env = pconfig.base_url_env_var or ""
 
     # Step 1: Check / prompt for API key
@@ -5525,7 +5526,7 @@ def _model_flow_stepfun(config, current_model=""):
 
     provider_id = "stepfun"
     pconfig = PROVIDER_REGISTRY[provider_id]
-    key_env = pconfig.api_key_env_vars[0] if pconfig.api_key_env_vars else ""
+    key_env = pconfig.api_key_env_vars[0] if pconfig.api_key_env_vars else ""  # noqa: F841
     base_url_env = pconfig.base_url_env_var or ""
 
     existing_key = ""
@@ -6052,7 +6053,7 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
         if model_list:
             print(f"  Found {len(model_list)} model(s) from Ollama Cloud")
     elif provider_id == "novita":
-        from hermes_cli.models import fetch_api_models
+        from hermes_cli.models import fetch_api_models  # noqa: F811
 
         api_key_for_probe = existing_key or (get_env_value(key_env) if key_env else "")
         curated = _PROVIDER_MODELS.get(provider_id, [])
@@ -7116,7 +7117,6 @@ def _compute_desktop_content_hash(project_root: Path) -> str:
             pass
         h.update(b"\0")
 
-
     from pathspec import PathSpec
 
     gitignore = project_root / ".gitignore"
@@ -7802,9 +7802,9 @@ def _print_curator_first_run_notice() -> None:
     print()
     print("ℹ Skill curator")
     print(
-        f"  Background skill maintenance is enabled. First pass is deferred "
+        "  Background skill maintenance is enabled. First pass is deferred "
         f"~{days}d after installation; only agent-created skills are in "
-        f"scope and nothing is ever auto-deleted (archive is recoverable)."
+        "scope and nothing is ever auto-deleted (archive is recoverable)."
     )
     print("  Preview now:  hermes curator run --dry-run")
     print("  Pause it:     hermes curator pause")
@@ -8303,7 +8303,6 @@ def _clean_managed_worktree(git_cmd: list[str], cwd: Path) -> bool:
         text=True,
     )
     return True
-
 
 
 def _resolve_stash_selector(
@@ -9073,7 +9072,7 @@ def _quarantine_running_hermes_exe(
         if scheduled:
             print(
                 f"  ⚠ {shim.name} is locked by another process; scheduled "
-                f"replacement on next reboot."
+                "replacement on next reboot."
             )
             print(
                 "    The new shim was written at the same path, but a "
@@ -9087,7 +9086,7 @@ def _quarantine_running_hermes_exe(
         # uv try its luck — sometimes uv's own retry handling pulls through.
         print(
             f"  ⚠ Could not quarantine {shim.name} ({last_exc.__class__.__name__}: "
-            f"another process is holding it open)."
+            "another process is holding it open)."
         )
         print(
             "    Close Hermes Desktop, exit other `hermes` REPLs, stop the "
@@ -9766,7 +9765,7 @@ def _install_hangup_protection(gateway_mode: bool = False):
         import datetime as _dt
 
         log_file.write(
-            f"\n=== hermes update started "
+            "\n=== hermes update started "
             f"{_dt.datetime.now().isoformat(timespec='seconds')} ===\n"
         )
 
@@ -9897,7 +9896,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
             capture_output=True,
             text=True,
         )
-        upstream_exists = False
+        upstream_exists = False  # noqa: F841
         compare_branch = f"origin/{branch}"
 
     if fetch_result.returncode != 0:
@@ -10125,8 +10124,8 @@ def _run_pre_update_backup(args) -> None:
 
     print(f"  Saved:    {display_path} ({size_str}, {elapsed:.1f}s)")
     print(f"  Restore:  hermes import {out_path}")
-    print(f"  Disable:  omit --backup (backups are off by default)")
-    print(f"            set updates.pre_update_backup: false in config.yaml")
+    print("  Disable:  omit --backup (backups are off by default)")
+    print("            set updates.pre_update_backup: false in config.yaml")
     print()
 
 
@@ -10410,7 +10409,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     "✗ Authentication failed — check your git credentials or SSH key."
                 )
             else:
-                print(f"✗ Failed to fetch updates from origin.")
+                print("✗ Failed to fetch updates from origin.")
                 if stderr:
                     print(f"  {stderr.splitlines()[0]}")
             sys.exit(1)
@@ -10643,7 +10642,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     print(
                         f"  ℹ️  Local changes preserved in stash (ref: {auto_stash_ref})"
                     )
-                    print(f"  Restore manually with: git stash apply")
+                    print("  Restore manually with: git stash apply")
                 else:
                     _restore_stashed_changes(
                         git_cmd,
@@ -10896,6 +10895,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             print()
             # Show WHAT changed, not just a count, so the user can make an
             # informed yes/no decision (previously the prompt named nothing).
+
             def _print_items(items, label, key, fallback_key=None):
                 if not items:
                     return
@@ -11426,7 +11426,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                                         print(
                                             f"  ✗ {svc_name} failed to stay running after restart.\n"
                                             f"    Check logs: journalctl {_scope_flag}-u {svc_name} --since '2 min ago'\n"
-                                            f"    Recover manually:\n"
+                                            "    Recover manually:\n"
                                             f"      systemctl {_scope_flag}reset-failed {svc_name}\n"
                                             f"      systemctl {_scope_flag}restart {svc_name}"
                                         )
@@ -11801,7 +11801,7 @@ def cmd_profile(args):
         try:
             set_active_profile(name)
             if name == "default":
-                print(f"Switched to: default (~/.hermes)")
+                print("Switched to: default (~/.hermes)")
             else:
                 print(f"Switched to: {name}")
         except (ValueError, FileNotFoundError) as e:
@@ -11886,9 +11886,9 @@ def cmd_profile(args):
                         if not _is_wrapper_dir_in_path():
                             print(f"\n⚠ {_get_wrapper_dir()} is not in your PATH.")
                             print(
-                                f"  Add to your shell config (~/.bashrc or ~/.zshrc):"
+                                "  Add to your shell config (~/.bashrc or ~/.zshrc):"
                             )
-                            print(f'    export PATH="$HOME/.local/bin:$PATH"')
+                            print('    export PATH="$HOME/.local/bin:$PATH"')
 
             # Profile dir for display
             try:
@@ -11897,7 +11897,7 @@ def cmd_profile(args):
                 profile_dir_display = str(profile_dir)
 
             # Next steps
-            print(f"\nNext steps:")
+            print("\nNext steps:")
             print(f"  {name} setup              Configure API keys and model")
             print(f"  {name} chat               Start chatting")
             print(f"  {name} gateway start      Start the messaging gateway")
@@ -11908,7 +11908,7 @@ def cmd_profile(args):
                 print(
                     f"\n  ⚠ This profile has no API keys yet. Run '{name} setup' first,"
                 )
-                print(f"    or it will inherit keys from your shell environment.")
+                print("    or it will inherit keys from your shell environment.")
                 print(f"  Edit {profile_dir_display}/SOUL.md to customize personality")
             print()
 
@@ -12182,7 +12182,7 @@ def cmd_profile(args):
             print(f"  Profile path: {plan.target_dir}")
             if plan.manifest.env_requires:
                 print(
-                    f"  Next: copy .env.EXAMPLE to .env and fill in required keys:\n"
+                    "  Next: copy .env.EXAMPLE to .env and fill in required keys:\n"
                     f"    {plan.target_dir}/.env.EXAMPLE"
                 )
             if plan.has_cron:
@@ -12417,7 +12417,7 @@ def cmd_dashboard(args):
     except ImportError as e:
         print("Web UI dependencies not installed (need fastapi + uvicorn).")
         print(
-            f"Re-install the package into this interpreter so metadata updates apply:\n"
+            "Re-install the package into this interpreter so metadata updates apply:\n"
             f"  cd {PROJECT_ROOT}\n"
             f"  {sys.executable} -m pip install -e .\n"
             "If `pip` is missing in this venv, use:  uv pip install -e ."
@@ -12525,6 +12525,8 @@ def cmd_logs(args):
         since=getattr(args, "since", None),
         component=getattr(args, "component", None),
     )
+
+
 # Top-level subcommands that argparse knows about WITHOUT running plugin
 # discovery.  Used to short-circuit eager plugin imports (which can take
 # 500ms+ pulling in google.cloud.pubsub_v1, aiohttp, grpc, etc.) when the
@@ -14118,7 +14120,7 @@ Examples:
     import_parser.add_argument("zipfile", help="Path to the backup zip file")
     import_parser.add_argument(
         "--force",
-        "-f",
+        "-",
         action="store_true",
         help="Overwrite existing files without confirmation",
     )
@@ -14502,7 +14504,7 @@ Examples:
     )
     plugins_install.add_argument(
         "--force",
-        "-f",
+        "-",
         action="store_true",
         help="Remove existing plugin and reinstall",
     )
@@ -14716,7 +14718,7 @@ Examples:
                 )
                 return
 
-            print(f"\n  This will permanently erase the following memory files:")
+            print("\n  This will permanently erase the following memory files:")
             for f, desc in existing:
                 path = mem_dir / f
                 size = path.stat().st_size
@@ -14737,7 +14739,7 @@ Examples:
                 print(f"  ✓ Deleted {f} ({desc})")
 
             print(
-                f"\n  Memory reset complete. New sessions will start with a blank slate."
+                "\n  Memory reset complete. New sessions will start with a blank slate."
             )
             print(f"  Files were in: {display_hermes_home()}/memories/\n")
         else:
@@ -15929,7 +15931,7 @@ Examples:
         help="Number of lines to show (default: 50)",
     )
     logs_parser.add_argument(
-        "-f",
+        "-",
         "--follow",
         action="store_true",
         help="Follow the log in real time (like tail -f)",

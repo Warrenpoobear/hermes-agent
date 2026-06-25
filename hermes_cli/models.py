@@ -80,8 +80,6 @@ OPENROUTER_MODELS: list[tuple[str, str]] = [
 _openrouter_catalog_cache: list[tuple[str, str]] | None = None
 
 
-
-
 def _codex_curated_models() -> list[str]:
     """Derive the openai-codex curated list from codex_models.py.
 
@@ -900,6 +898,7 @@ class ProviderEntry(NamedTuple):
     slug: str
     label: str
     tui_desc: str   # detailed description for `hermes model` TUI
+
 
 CANONICAL_PROVIDERS: list[ProviderEntry] = [
     ProviderEntry("nous",           "Nous Portal",              "Nous Portal (Everything your agent needs, 300+ models with bundled tool use)"),
@@ -3258,7 +3257,6 @@ def fetch_api_models(
 # ---------------------------------------------------------------------------
 # Ollama Cloud — merged model discovery with disk cache
 # ---------------------------------------------------------------------------
-
 
 
 _OLLAMA_CLOUD_CACHE_TTL = 3600  # 1 hour

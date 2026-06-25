@@ -55,6 +55,7 @@ _OPENCLAW_SCRIPT_INSTALLED = (
 # Known OpenClaw directory names (current + legacy)
 _OPENCLAW_DIR_NAMES = (".openclaw", ".clawdbot", ".moltbot")
 
+
 def _detect_openclaw_processes() -> list[str]:
     """Detect running OpenClaw processes and services.
 
@@ -182,6 +183,7 @@ def _warn_if_gateway_running(auto_yes: bool) -> None:
     if not auto_yes and not prompt_yes_no("Continue anyway?", default=False):
         print_info("Migration cancelled. Stop the gateway and try again.")
         sys.exit(0)
+
 
 # State files commonly found in OpenClaw workspace directories — listed
 # during cleanup to help the user decide whether to archive

@@ -69,7 +69,7 @@ except ImportError:
 
     class _PaginationDirectionStub:  # type: ignore[no-redef]
         BACKWARD = "b"
-        FORWARD = "f"
+        FORWARD = ""
 
     PaginationDirection = _PaginationDirectionStub  # type: ignore[misc,assignment]
 
@@ -187,6 +187,7 @@ class _MatrixApprovalPrompt:
         self.message_id = message_id
         self.resolved = resolved
         self.bot_reaction_events: dict[str, str] = {}  # emoji -> event_id
+
 
 # Matrix message size limit (4000 chars practical, spec has no hard limit
 # but clients render poorly above this).
@@ -1183,7 +1184,6 @@ class MatrixAdapter(BasePlatformAdapter):
                 await self._client.set_typing(RoomID(chat_id), timeout=0)
             except Exception:
                 pass
-
 
     async def edit_message(
         self, chat_id: str, message_id: str, content: str, *, finalize: bool = False

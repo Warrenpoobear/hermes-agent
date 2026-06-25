@@ -933,7 +933,7 @@ def test_heartbeat_extends_claim(kanban_home):
         t = kb.create_task(conn, title="x", assignee="a")
         claimer = "host:hb"
         kb.claim_task(conn, t, claimer=claimer, ttl_seconds=60)
-        original = kb.get_task(conn, t).claim_expires
+        original = kb.get_task(conn, t).claim_expires  # noqa: F841
         # Rewind then heartbeat.
         conn.execute("UPDATE tasks SET claim_expires = ? WHERE id = ?", (0, t))
         ok = kb.heartbeat_claim(conn, t, claimer=claimer, ttl_seconds=3600)
@@ -1379,6 +1379,7 @@ def test_list_tasks_order_by(kanban_home):
         except ValueError as e:
             assert "order_by must be one of" in str(e)
 
+
 def test_delete_task_removes_task_and_cascades(kanban_home):
     with kb.connect() as conn:
         t = kb.create_task(conn, title="to-delete", assignee="alice")
@@ -1537,7 +1538,7 @@ def test_dispatch_promotes_ready_and_spawns(kanban_home, all_assignees_spawnable
         c = kb.create_task(conn, title="c", assignee="bob", parents=[p])
         # Finish parent outside dispatch; promotion happens inside.
         kb.complete_task(conn, p)
-        res = kb.dispatch_once(conn, spawn_fn=fake_spawn)
+        res = kb.dispatch_once(conn, spawn_fn=fake_spawn)  # noqa: F841
     # Spawned c (a was already done when dispatch was called).
     assert len(spawns) == 1
     assert spawns[0][0] == c
@@ -2551,7 +2552,6 @@ def test_latest_summaries_batch_omits_tasks_without_summary(kanban_home):
         assert kb.latest_summaries(conn, []) == {}
 
 
-
 # ---------------------------------------------------------------------------
 # NFS / network-filesystem fallback (see hermes_state.apply_wal_with_fallback)
 # ---------------------------------------------------------------------------
@@ -2674,6 +2674,7 @@ def test_archive_task_triggers_recompute_ready_for_dependents(kanban_home):
 # ---------------------------------------------------------------------------
 # _add_column_if_missing / _migrate_add_optional_columns idempotency (#21708)
 # ---------------------------------------------------------------------------
+
 
 def test_add_column_if_missing_is_idempotent_on_race(kanban_home):
     """``_add_column_if_missing`` must swallow 'duplicate column name' errors.
@@ -3277,8 +3278,8 @@ def test_dispatch_review_counts_toward_max_spawn(
 
     with kb.connect() as conn:
         # Create 2 ready tasks + 1 review task, max_spawn=2
-        t1 = kb.create_task(conn, title="ready 1", assignee="alice")
-        t2 = kb.create_task(conn, title="ready 2", assignee="bob")
+        t1 = kb.create_task(conn, title="ready 1", assignee="alice")  # noqa: F841
+        t2 = kb.create_task(conn, title="ready 2", assignee="bob")  # noqa: F841
         t3 = kb.create_task(conn, title="review", assignee="alice")
         _set_task_status(conn, t3, "review")
         res = kb.dispatch_once(conn, spawn_fn=fake_spawn, max_spawn=2)
@@ -3361,6 +3362,7 @@ def test_dispatch_review_does_not_claim_ready_tasks(
 
 # Stale detection — detect_stale_running
 # ---------------------------------------------------------------------------
+
 
 def test_detect_stale_returns_running_task_with_no_heartbeat(kanban_home, monkeypatch):
     """A task running > timeout with zero heartbeats gets reclaimed as stale."""
@@ -3897,7 +3899,6 @@ def test_connect_pragmas_applied_on_reconnect(tmp_path):
         assert conn.execute("PRAGMA synchronous").fetchone()[0] == 2
 
 
-
 def test_pragmas_not_accidentally_disabled_by_migrate_path(tmp_path):
     """Migration path must not reset connection pragmas."""
     db_path = tmp_path / "legacy.db"
@@ -3969,6 +3970,8 @@ def test_write_txn_preserves_original_exception_when_rollback_fails(kanban_home)
         f"write_txn surfaced the rollback failure instead of the original "
         f"OperationalError; got {msg!r}"
     )
+
+
 def test_write_txn_healthy_commit_no_exception(tmp_path):
     """Normal commit does not trigger the torn-extend check."""
     from hermes_cli.kanban_db import connect, write_txn
@@ -4224,7 +4227,6 @@ def test_dispatch_once_still_reaps_via_extracted_fn(kanban_home):
                 pids = kb.reap_worker_zombies()
 
     assert pids == [99999]
-
 
 
 # ---------------------------------------------------------------------------

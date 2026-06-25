@@ -1242,7 +1242,6 @@ class TestPrompt:
             text and "[plugin appended this]" in text for text in all_texts
         ), f"expected transformed final to be delivered, got: {all_texts!r}"
 
-
     @pytest.mark.asyncio
     async def test_prompt_auto_titles_session(self, agent):
         new_resp = await agent.new_session(cwd=".")
@@ -1665,6 +1664,7 @@ class TestRegisterSessionMcpServers:
         )
 
         registered_config = {}
+
         def capture_register(config_map):
             registered_config.update(config_map)
             return ["mcp_test_server_tool1"]
@@ -1697,6 +1697,7 @@ class TestRegisterSessionMcpServers:
         )
 
         registered_config = {}
+
         def capture_register(config_map):
             registered_config.update(config_map)
             return []

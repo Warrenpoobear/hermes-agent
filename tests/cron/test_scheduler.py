@@ -1287,7 +1287,7 @@ class TestRunJobSessionPersistence:
             "last_status": None,
         }
 
-        fake_db = MagicMock()
+        fake_db = MagicMock()  # noqa: F841
 
         with patch("cron.scheduler._hermes_home", tmp_path), \
              patch("cron.scheduler.get_due_jobs", return_value=[job]), \
@@ -2116,6 +2116,7 @@ class TestRunJobWakeGate:
         import cron.scheduler as scheduler
 
         call_count = 0
+
         def _script_stub(path):
             nonlocal call_count
             call_count += 1

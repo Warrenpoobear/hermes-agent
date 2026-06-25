@@ -107,7 +107,8 @@ def _register_bot(*, prefer_token: str = CONFIG_REG_TOKEN, fallback_token: str |
             continue
         st, b = _post_json(f"{HS}/_matrix/client/v3/register", {})
         if st != 401 or "session" not in b:
-            last_err = (st, b); continue
+            last_err = (st, b)
+            continue
         session = b["session"]
         st, b = _post_json(f"{HS}/_matrix/client/v3/register", {
             "auth": {"type": "m.login.registration_token", "token": tok, "session": session},

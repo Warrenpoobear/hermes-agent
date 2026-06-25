@@ -14,7 +14,6 @@ import types
 from unittest.mock import MagicMock, patch
 
 
-
 # ===========================================================================
 # Helpers
 # ===========================================================================
@@ -136,6 +135,7 @@ class TestSyncSessionKeyAfterAutoCompress:
 
         class _CompressingAgent:
             """Agent that simulates compression-driven session_id rotation."""
+
             def __init__(self):
                 self.session_id = "pre-compress-key"
                 self._cached_system_prompt = ""
@@ -156,7 +156,7 @@ class TestSyncSessionKeyAfterAutoCompress:
 
         # Track if _sync_session_key_after_compress was called
         sync_calls = []
-        original_sync = server._sync_session_key_after_compress
+        server._sync_session_key_after_compress
 
         def _tracking_sync(sid, sess, **kwargs):
             sync_calls.append((sid, sess.get("session_key")))
@@ -174,6 +174,7 @@ class TestSyncSessionKeyAfterAutoCompress:
         class _ImmediateThread:
             def __init__(self, target=None, daemon=None, **kw):
                 self._target = target
+
             def start(self):
                 self._target()
 
@@ -219,6 +220,7 @@ class TestPendingTitleValueError:
         class _Agent:
             session_id = "test-session"
             _cached_system_prompt = ""
+
             def run_conversation(self, prompt, **kw):
                 return {
                     "final_response": "ok",
@@ -242,6 +244,7 @@ class TestPendingTitleValueError:
         class _ImmediateThread:
             def __init__(self, target=None, daemon=None, **kw):
                 self._target = target
+
             def start(self):
                 self._target()
 
@@ -273,6 +276,7 @@ class TestPendingTitleValueError:
         class _Agent:
             session_id = "test-session"
             _cached_system_prompt = ""
+
             def run_conversation(self, prompt, **kw):
                 return {
                     "final_response": "ok",
@@ -296,6 +300,7 @@ class TestPendingTitleValueError:
         class _ImmediateThread:
             def __init__(self, target=None, daemon=None, **kw):
                 self._target = target
+
             def start(self):
                 self._target()
 

@@ -346,7 +346,6 @@ class NousDashboardAuthProvider(DashboardAuthProvider):
             refresh_token = ""
         return self._session_from_claims(access_token, refresh_token, claims)
 
-
     def verify_session(self, *, access_token: str) -> Optional[Session]:
         # Contract: returns None on expiry/invalidity (middleware then
         # triggers redirect-to-login since refresh_session can never succeed

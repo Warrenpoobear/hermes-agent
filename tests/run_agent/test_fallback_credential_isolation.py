@@ -15,7 +15,6 @@ import sys
 from unittest.mock import MagicMock
 
 
-
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _make_pool(provider, n_entries=1):
@@ -92,7 +91,6 @@ class TestFallbackCredentialIsolation:
 
         # Simulate: after fallback activation, provider is now openrouter
         fb_provider = "openrouter"
-        fb_model = "openrouter/auto"
 
         # The isolation code from _try_activate_fallback:
         pool = getattr(agent, "_credential_pool", None)

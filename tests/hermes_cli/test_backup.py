@@ -1302,6 +1302,7 @@ class TestQuickSnapshot:
 # Pre-update backup (hermes update safety net)
 # ---------------------------------------------------------------------------
 
+
 class TestPreUpdateBackup:
     """Tests for create_pre_update_backup — the auto-backup ``hermes update``
     runs before touching anything."""

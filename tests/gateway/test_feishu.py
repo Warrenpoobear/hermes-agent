@@ -15,7 +15,6 @@ from unittest.mock import AsyncMock, Mock, patch
 from gateway.platforms.base import ProcessingOutcome
 
 try:
-    import lark_oapi
     _HAS_LARK_OAPI = True
 except ImportError:
     _HAS_LARK_OAPI = False
@@ -450,6 +449,7 @@ class TestFeishuAdapterMessaging(unittest.TestCase):
         self.assertEqual(info["chat_id"], "oc_chat")
         self.assertEqual(info["name"], "Hermes Group")
         self.assertEqual(info["type"], "group")
+
 
 class TestAdapterModule(unittest.TestCase):
     def test_load_settings_uses_sdk_defaults_for_invalid_ws_reconnect_values(self):
@@ -3119,7 +3119,7 @@ class TestPendingInboundQueue(unittest.TestCase):
 class TestWebhookSecurity(unittest.TestCase):
     """Tests for webhook signature verification, rate limiting, and body size limits."""
 
-    def _make_adapter(self, encrypt_key: str = "") -> "FeishuAdapter":
+    def _make_adapter(self, encrypt_key: str = "") -> "FeishuAdapter":  # noqa: F821
         from gateway.config import PlatformConfig
         from gateway.platforms.feishu import FeishuAdapter
 

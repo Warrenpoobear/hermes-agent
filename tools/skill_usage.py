@@ -606,6 +606,7 @@ def set_state(skill_name: str, state: str) -> None:
     if state not in _VALID_STATES:
         logger.debug("set_state: invalid state %r for %s", state, skill_name)
         return
+
     def _apply(rec: Dict[str, Any]) -> None:
         rec["state"] = state
         if state == STATE_ARCHIVED:
@@ -673,7 +674,7 @@ def archive_skill(skill_name: str) -> Tuple[bool, str]:
 
     try:
         skill_dir.rename(dest)
-    except OSError as e:
+    except OSError:
         # Cross-device — fall back to shutil.move
         import shutil
         try:

@@ -52,7 +52,7 @@ class TestYuanbaoAdapterInit:
         config = make_config()
         adapter = YuanbaoAdapter(config)
         status = adapter.get_status()
-        assert status["connected"] == False
+        assert status["connected"] is False
         assert status["bot_id"] is None
 
 
@@ -375,7 +375,7 @@ class TestP0ChatLockEviction:
 
         # Lock the oldest entry
         oldest_key = next(iter(adapter._outbound._chat_locks))
-        oldest_lock = adapter._outbound._chat_locks[oldest_key]
+        adapter._outbound._chat_locks[oldest_key]
         # Simulate a held lock by acquiring it in a non-async way (set _locked)
         # asyncio.Lock is not held until actually acquired; so we test the
         # method logic by acquiring the first lock manually.

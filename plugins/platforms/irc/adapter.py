@@ -162,7 +162,7 @@ class IRCAdapter(BasePlatformAdapter):
 
         # Prevent two profiles from using the same IRC identity
         try:
-            from gateway.status import acquire_scoped_lock, release_scoped_lock
+            from gateway.status import acquire_scoped_lock
             lock_key = f"{self.server}:{self.nickname}"
             if not acquire_scoped_lock("irc", lock_key):
                 logger.error("IRC: %s@%s already in use by another profile", self.nickname, self.server)
@@ -277,7 +277,6 @@ class IRCAdapter(BasePlatformAdapter):
 
     async def send_typing(self, chat_id: str, metadata=None) -> None:
         """IRC has no typing indicator — no-op."""
-        pass
 
     async def get_chat_info(self, chat_id: str) -> Dict[str, Any]:
         is_channel = chat_id.startswith("#") or chat_id.startswith("&")

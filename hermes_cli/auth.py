@@ -531,7 +531,6 @@ def _resolve_kimi_base_url(api_key: str, default_url: str, env_override: str) ->
     return default_url
 
 
-
 _PLACEHOLDER_SECRET_VALUES = {
     "*",
     "**",
@@ -3066,6 +3065,7 @@ def login_spotify_command(args) -> None:
 # SSH / remote session detection
 # =============================================================================
 
+
 def _is_remote_session() -> bool:
     """Detect environments where loopback OAuth can't reach the local browser.
 
@@ -3087,7 +3087,7 @@ def _is_remote_session() -> bool:
         "CLOUD_SHELL",         # GCP Cloud Shell
         "CODESPACES",          # GitHub Codespaces
         "CODESPACE_NAME",      # GitHub Codespaces (alt)
-        "GITPOD_WORKSPACE_ID", # Gitpod
+        "GITPOD_WORKSPACE_ID",  # Gitpod
         "REPL_ID",             # Replit
         "STACKBLITZ",          # StackBlitz
     ):
@@ -3321,7 +3321,7 @@ def _print_loopback_ssh_hint(redirect_uri: str, *, docs_url: str | None = None) 
 
 def _read_codex_tokens(*, _lock: bool = True) -> Dict[str, Any]:
     """Read Codex OAuth tokens from Hermes auth store (~/.hermes/auth.json).
-    
+
     Returns dict with 'tokens' (access_token, refresh_token) and 'last_refresh'.
     Raises AuthError if no Codex tokens are stored.
     """
@@ -3589,7 +3589,7 @@ def _refresh_codex_auth_tokens(
     timeout_seconds: float,
 ) -> Dict[str, str]:
     """Refresh Codex access token using the refresh token.
-    
+
     Saves the new tokens to Hermes auth store automatically.
     """
     refreshed = refresh_codex_oauth_pure(
@@ -3607,7 +3607,7 @@ def _refresh_codex_auth_tokens(
 
 def _import_codex_cli_tokens() -> Optional[Dict[str, str]]:
     """Try to read tokens from ~/.codex/auth.json (Codex CLI shared file).
-    
+
     Returns tokens dict if valid and not expired, None otherwise.
     Does NOT write to the shared file.
     """
@@ -3875,9 +3875,9 @@ def _xai_validate_oauth_endpoint(url: str, *, field: str) -> str:
     if host != "x.ai" and not host.endswith(".x.ai"):
         raise AuthError(
             f"xAI OIDC discovery {field} host {host!r} is not on the xAI origin "
-            f"(expected x.ai or a *.x.ai subdomain). Refusing to use a cached "
-            f"endpoint that may have been substituted by a MITM during initial "
-            f"discovery; re-authenticate with `hermes model` to re-fetch.",
+            "(expected x.ai or a *.x.ai subdomain). Refusing to use a cached "
+            "endpoint that may have been substituted by a MITM during initial "
+            "discovery; re-authenticate with `hermes model` to re-fetch.",
             provider="xai-oauth",
             code="xai_discovery_invalid",
         )
@@ -4403,7 +4403,7 @@ def _nous_shared_store_path() -> Path:
             resolved = path
         if resolved == real_home_shared:
             raise RuntimeError(
-                f"Refusing to touch real user shared Nous auth store during test run: "
+                "Refusing to touch real user shared Nous auth store during test run: "
                 f"{path}. Set HERMES_SHARED_AUTH_DIR to a tmp_path in your test fixture."
             )
     return path
@@ -5621,7 +5621,7 @@ def _compute_nous_auth_status() -> Dict[str, Any]:
 
 def get_codex_auth_status() -> Dict[str, Any]:
     """Status snapshot for Codex auth.
-    
+
     Checks the credential pool first (where `hermes auth` stores credentials),
     then falls back to the legacy provider state.
     """
@@ -6564,7 +6564,7 @@ def _xai_oauth_exchange_code_for_tokens(
         # key fallback.  See #26847.
         if response.status_code == 403:
             raise AuthError(
-                f"xAI token exchange failed (HTTP 403)."
+                "xAI token exchange failed (HTTP 403)."
                 + (f" Response: {body}" if body else "")
                 + " This OAuth account is not authorized for xAI API"
                   " access — xAI may be restricting API/OAuth use to"
@@ -6983,7 +6983,7 @@ def _minimax_request_user_code(
             provider="minimax-oauth", code="authorization_failed",
         )
     payload = response.json()
-    for field in ("user_code", "verification_uri", "expired_in"):
+    for field in ("user_code", "verification_uri", "expired_in"):  # noqa: F402
         if field not in payload:
             raise AuthError(
                 f"MiniMax OAuth response missing field: {field}",

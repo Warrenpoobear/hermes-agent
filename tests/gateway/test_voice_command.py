@@ -1280,7 +1280,9 @@ class TestVoiceReceiverThreadSafety:
 
     def test_check_silence_holds_lock(self):
         """check_silence must hold lock while iterating buffers."""
-        import ast, inspect, textwrap
+        import ast
+        import inspect
+        import textwrap
         from plugins.platforms.discord.adapter import VoiceReceiver
         source = textwrap.dedent(inspect.getsource(VoiceReceiver.check_silence))
         tree = ast.parse(source)
@@ -1301,7 +1303,9 @@ class TestVoiceReceiverThreadSafety:
 
     def test_on_packet_buffer_write_holds_lock(self):
         """_on_packet must hold lock when writing to buffers."""
-        import ast, inspect, textwrap
+        import ast
+        import inspect
+        import textwrap
         from plugins.platforms.discord.adapter import VoiceReceiver
         source = textwrap.dedent(inspect.getsource(VoiceReceiver._on_packet))
         tree = ast.parse(source)
@@ -1482,7 +1486,7 @@ class TestAutoTtsEmptyTextGuard:
         """Code-only response results in empty speech text."""
         import re
         text_content = "```python\nprint(1)\n```"
-        speech_text = re.sub(r'[*_`#\[\]()]', '', text_content)[:4000].strip()
+        speech_text = re.sub(r'[*_`#\[\]()]', '', text_content)[:4000].strip()  # noqa: F841
         # Note: base.py regex only strips individual chars, not full code blocks
         # So code blocks are partially stripped but may leave content
         # The real fix is in base.py — empty check after strip
@@ -2041,7 +2045,9 @@ class TestSendVoiceReplyCleanup:
 
     def test_cleanup_in_finally(self):
         """The method has cleanup in a finally block, not inside try."""
-        import inspect, textwrap, ast
+        import inspect
+        import textwrap
+        import ast
         from gateway.run import GatewayRunner
         source = textwrap.dedent(inspect.getsource(GatewayRunner._send_voice_reply))
         tree = ast.parse(source)
@@ -2617,6 +2623,7 @@ class TestVoiceTTSPlayback:
         adapter._voice_text_channels[111] = 123
 
         played = []
+
         async def fake_play(gid, path):
             played.append((gid, path))
             return True
@@ -2648,7 +2655,7 @@ class TestVoiceTTSPlayback:
         from gateway.platforms.base import SendResult
         adapter.send_voice = AsyncMock(return_value=SendResult(success=True))
         # Different chat_id — shouldn't match VC
-        result = await adapter.play_tts(chat_id="999", audio_path="/tmp/tts.ogg")
+        result = await adapter.play_tts(chat_id="999", audio_path="/tmp/tts.ogg")  # noqa: F841
         adapter.send_voice.assert_called_once()
 
     # -- Runner dedup --

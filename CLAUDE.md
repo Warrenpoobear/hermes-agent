@@ -79,8 +79,9 @@ timezone, locale, and worker count.
    layer files through MCP.
 
 2. **No Town-to-Hermes feedback automation.** The Town-Hermes Feedback Protocol
-   is FROZEN until after h20d. Do not implement automated memory sync,
-   contradiction-ledger routing, or `.learnings/` write paths.
+   is FROZEN pending h20d re-evaluation gate (due 2026-07-01). Do not implement
+   automated memory sync, contradiction-ledger routing, or `.learnings/` write
+   paths until gate clears and operator explicitly lifts this constraint.
 
 3. **Held specifications.** Check `held_spec_ledger` before making changes. If a
    spec is held, do not modify the constrained area without operator approval.

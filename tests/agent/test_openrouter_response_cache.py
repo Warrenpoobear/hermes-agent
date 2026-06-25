@@ -220,6 +220,7 @@ class TestEnvVarOverrides:
         assert headers["X-OpenRouter-Cache"] == "true"
         assert headers["X-OpenRouter-Cache-TTL"] == "600"
 
+
 class TestDefaultConfig:
     """Verify the openrouter config section is in DEFAULT_CONFIG."""
 

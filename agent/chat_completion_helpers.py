@@ -523,7 +523,6 @@ def interruptible_api_call(agent, api_kwargs: dict):
     return result["response"]
 
 
-
 def build_api_kwargs(agent, api_messages: list) -> dict:
     """Build the keyword arguments dict for the active API mode."""
     tools_for_api = agent.tools
@@ -783,7 +782,6 @@ def build_api_kwargs(agent, api_messages: list) -> dict:
     )
 
 
-
 def build_assistant_message(agent, assistant_message, finish_reason: str) -> dict:
     """Build a normalized assistant message dict from an API response message.
 
@@ -792,7 +790,7 @@ def build_assistant_message(agent, assistant_message, finish_reason: str) -> dic
     """
     assistant_tool_calls = getattr(assistant_message, "tool_calls", None)
     reasoning_text = agent._extract_reasoning(assistant_message)
-    _from_structured = bool(reasoning_text)
+    bool(reasoning_text)
 
     # Fallback: extract inline <think> blocks from content when no structured
     # reasoning fields are present (some models/providers embed thinking
@@ -999,7 +997,6 @@ def build_assistant_message(agent, assistant_message, finish_reason: str) -> dic
         msg["tool_calls"] = tool_calls
 
     return msg
-
 
 
 def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool:
@@ -1261,7 +1258,6 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
         return agent._try_activate_fallback()  # try next in chain
 
 
-
 def handle_max_iterations(agent, messages: list, api_call_count: int) -> str:
     """Request a summary when max iterations are reached. Returns the final response text."""
     print(f"⚠️  Reached maximum iterations ({agent.max_iterations}). Requesting summary...")
@@ -1491,7 +1487,6 @@ def handle_max_iterations(agent, messages: list, api_call_count: int) -> str:
     return final_response
 
 
-
 def cleanup_task_resources(agent, task_id: str) -> None:
     """Clean up VM and browser resources for a given task.
 
@@ -1520,8 +1515,6 @@ def cleanup_task_resources(agent, task_id: str) -> None:
     except Exception as e:
         if agent.verbose_logging:
             logger.warning(f"Failed to cleanup browser for task {task_id}: {e}")
-
-
 
 
 def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=None):
@@ -2443,7 +2436,6 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
     return result["response"]
 
 # ── Provider fallback ──────────────────────────────────────────────────
-
 
 
 __all__ = [

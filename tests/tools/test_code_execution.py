@@ -30,6 +30,8 @@ def _force_local_terminal(monkeypatch):
     ensures each test starts (and ends) with the correct value.
     """
     monkeypatch.setenv("TERMINAL_ENV", "local")
+
+
 import sys
 import threading
 import unittest
@@ -180,7 +182,7 @@ class TestExecuteCode(unittest.TestCase):
 
     def _run(self, code, enabled_tools=None):
         """Helper: run code with mocked handle_function_call."""
-        with patch("tools.code_execution_tool._rpc_server_loop") as mock_rpc:
+        with patch("tools.code_execution_tool._rpc_server_loop") as mock_rpc:  # noqa: F841
             # Use real execution but mock the tool dispatcher
             pass
         # Actually run with full integration, mocking at the model_tools level

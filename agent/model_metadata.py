@@ -41,6 +41,7 @@ def _resolve_requests_verify() -> bool | str:
             return val
     return True
 
+
 # Provider names that can appear as a "provider:" prefix before a model ID.
 # Only these are stripped — Ollama-style "model:tag" colons (e.g. "qwen3.5:27b")
 # are preserved so the full model name reaches cache lookups and server queries.
@@ -101,6 +102,7 @@ def _strip_provider_prefix(model: str) -> str:
             return model
         return suffix
     return model
+
 
 _model_metadata_cache: Dict[str, Dict[str, Any]] = {}
 _model_metadata_cache_time: float = 0

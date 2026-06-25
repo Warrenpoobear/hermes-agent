@@ -858,7 +858,8 @@ class TestEnvironmentHints:
 
     def test_build_environment_hints_on_linux_local(self, monkeypatch):
         import agent.prompt_builder as _pb
-        import sys, platform
+        import sys
+        import platform
         monkeypatch.setattr(_pb, "is_wsl", lambda: False)
         monkeypatch.setattr(sys, "platform", "linux")
         monkeypatch.setattr(platform, "system", lambda: "Linux")
@@ -1268,5 +1269,3 @@ class TestOpenAIModelExecutionGuidance:
 # =========================================================================
 # Budget warning history stripping
 # =========================================================================
-
-

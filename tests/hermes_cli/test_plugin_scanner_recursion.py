@@ -276,7 +276,7 @@ class TestBundledBackendAutoLoad:
         """The bundled ``plugins/image_gen/openai/`` plugin loads without
         any opt-in — it's ``kind: backend`` and shipped in-repo."""
         import os
-        hermes_home = Path(os.environ["HERMES_HOME"])  # set by hermetic conftest fixture
+        hermes_home = Path(os.environ["HERMES_HOME"])  # set by hermetic conftest fixture  # noqa: F841
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -308,7 +308,7 @@ class TestRegisterImageGenProvider:
 
         import os
         hermes_home = Path(os.environ["HERMES_HOME"])  # set by hermetic conftest fixture
-        plugin_dir = _write_plugin(
+        plugin_dir = _write_plugin(  # noqa: F841
             hermes_home / "plugins",
             ["my-img-plugin"],
             register_body=(

@@ -303,6 +303,7 @@ except (ImportError, AttributeError):
 
 class FakeDMChannel(_DMChannelBase):
     """Minimal DM channel stub (skips mention / channel-allow checks)."""
+
     def __init__(self, channel_id: int = 100, name: str = "dm"):
         # Do NOT call super().__init__() — real DMChannel requires State
         self.id = channel_id

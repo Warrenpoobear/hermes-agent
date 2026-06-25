@@ -26,12 +26,13 @@ from unittest.mock import MagicMock, patch
 from run_agent import AIAgent, IterationBudget
 from tools.interrupt import set_interrupt
 
+
 def make_slow_response(delay=2.0):
     """API response that takes a while."""
     def create(**kwargs):
         log.info(f"   🌐 Mock API call starting (will take {delay}s)...")
         time.sleep(delay)
-        log.info(f"   🌐 Mock API call completed")
+        log.info("   🌐 Mock API call completed")
         resp = MagicMock()
         resp.choices = [MagicMock()]
         resp.choices[0].message.content = "Done with the task"

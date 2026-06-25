@@ -908,6 +908,7 @@ def _board_schema_prop() -> dict[str, str]:
     """
     return {"type": "string", "description": _DESC_BOARD}
 
+
 KANBAN_SHOW_SCHEMA = {
     "name": "kanban_show",
     "description": (

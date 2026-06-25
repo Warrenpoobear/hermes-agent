@@ -72,6 +72,7 @@ class ServiceManager(Protocol):
 
     # Runtime registration (s6 only).
     def supports_runtime_registration(self) -> bool: ...
+
     def register_profile_gateway(
         self,
         profile: str,

@@ -235,6 +235,7 @@ class TestTelegramExecApproval:
 # _handle_callback_query — approval button clicks
 # ===========================================================================
 
+
 class TestTelegramApprovalCallback:
     """Test the approval callback handling in _handle_callback_query."""
 

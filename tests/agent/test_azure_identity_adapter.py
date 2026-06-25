@@ -29,6 +29,8 @@ import pytest
 # Ensure we always import a fresh adapter module — credential caches in
 # the adapter persist across tests otherwise, polluting assertions
 # about cache invalidation.
+
+
 @pytest.fixture(autouse=True)
 def _reset_adapter_cache():
     from agent.azure_identity_adapter import reset_credential_cache
@@ -463,6 +465,7 @@ class TestRequireAzureIdentityMissing:
 
         # Force the import path to fail.
         original_import = __builtins__["__import__"] if isinstance(__builtins__, dict) else __import__
+
         def _fake_import(name, *args, **kwargs):
             if name == "azure.identity" or name.startswith("azure.identity."):
                 raise ImportError("simulated missing azure-identity")

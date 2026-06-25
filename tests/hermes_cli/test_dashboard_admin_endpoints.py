@@ -103,7 +103,6 @@ class TestMcpEndpoints:
         assert r.status_code == 404
 
 
-
 class TestCredentialPoolEndpoints:
     @pytest.fixture(autouse=True)
     def _setup(self, _isolate_hermes_home):
@@ -357,8 +356,6 @@ class TestSkillsHubSearchEndpoint:
         assert r.status_code == 200 and r.json() == {"results": []}
 
 
-
-
 class TestWebhookToggleEndpoint:
     @pytest.fixture(autouse=True)
     def _setup(self, _isolate_hermes_home):
@@ -385,7 +382,6 @@ class TestWebhookToggleEndpoint:
         assert self.client.put(
             "/api/webhooks/nope/enabled", json={"enabled": True}
         ).status_code == 404
-
 
 
 class TestAdminEndpointsAuthGate:
@@ -590,4 +586,3 @@ class TestDebugShareEndpoint:
             headers={self.header: "wrong-token"},
         )
         assert r.status_code == 401
-

@@ -130,7 +130,6 @@ class TestGetTimezone:
         assert tz is None
 
 
-
 # =========================================================================
 # execute_code child env — TZ injection
 # =========================================================================
@@ -247,7 +246,7 @@ class TestCronTimezone:
 
         # Create a job with a NAIVE past timestamp (simulating pre-tz data)
         from cron.jobs import create_job, load_jobs, save_jobs, get_due_jobs
-        job = create_job(prompt="Test job", schedule="every 1h")
+        job = create_job(prompt="Test job", schedule="every 1h")  # noqa: F841
         jobs = load_jobs()
         # Force a naive (no timezone) past timestamp
         naive_past = (datetime.now() - timedelta(seconds=30)).isoformat()
@@ -322,7 +321,7 @@ class TestCronTimezone:
 
         from cron.jobs import create_job, load_jobs, save_jobs, get_due_jobs
 
-        job = create_job(prompt="Bug repro", schedule="every 1h")
+        job = create_job(prompt="Bug repro", schedule="every 1h")  # noqa: F841
         jobs = load_jobs()
 
         # Simulate a naive timestamp that was written by datetime.now() on a

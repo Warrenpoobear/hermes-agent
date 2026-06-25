@@ -512,6 +512,7 @@ class TestPluginHooks:
 
         assert any("on_banana" in record.message for record in caplog.records)
 
+
 class TestPreToolCallBlocking:
     """Tests for the pre_tool_call block directive helper."""
 
@@ -900,7 +901,6 @@ class TestPluginManagerList:
             assert "enabled" in p
             assert "tools" in p
             assert "hooks" in p
-
 
 
 class TestPreLlmCallTargetRouting:

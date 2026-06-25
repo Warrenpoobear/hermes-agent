@@ -461,8 +461,6 @@ class TestSessionContext:
         """Session context is per-thread — one thread's context doesn't leak."""
         hermes_logging.setup_logging(hermes_home=hermes_home)
 
-        results = {}
-
         def thread_a():
             hermes_logging.set_session_context("thread_a_session")
             logging.getLogger("test.thread_a").info("from thread A")
@@ -973,8 +971,10 @@ class TestExternalRotationRecovery:
 
         logging.getLogger("gateway.run").info("line BEFORE rotation")
         for h in logging.getLogger().handlers:
-            try: h.flush()
-            except Exception: pass
+            try:
+                h.flush()
+            except Exception:
+                pass
         assert "BEFORE rotation" in gw_path.read_text()
 
         # External actor renames the file out from under us.
@@ -988,8 +988,10 @@ class TestExternalRotationRecovery:
 
         logging.getLogger("gateway.run").info("line AFTER rotation")
         for h in logging.getLogger().handlers:
-            try: h.flush()
-            except Exception: pass
+            try:
+                h.flush()
+            except Exception:
+                pass
 
         # The new record must reach the live gateway.log, not the rotated
         # backup.  Allen's logs had everything past the rotation point

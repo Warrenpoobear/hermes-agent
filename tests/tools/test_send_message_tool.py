@@ -25,6 +25,7 @@ def _reset_signal_scheduler():
     yield
     _reset_scheduler()
 
+
 from gateway.config import Platform
 from tools.send_message_tool import (
     _is_telegram_thread_not_found,
@@ -1394,7 +1395,7 @@ class TestSendToPlatformDiscordThread:
         send_mock = AsyncMock(return_value={"success": True, "message_id": "1"})
 
         with _patch_discord_sender(send_mock):
-            result = asyncio.run(
+            result = asyncio.run(  # noqa: F841
                 _send_to_platform(
                     Platform.DISCORD,
                     SimpleNamespace(enabled=True, token="tok", extra={}),
@@ -1806,7 +1807,6 @@ class TestSendDiscordForum:
         assert "403" in result["error"]
 
 
-
 class TestSendToPlatformDiscordForum:
     """_send_to_platform delegates forum detection to _send_discord."""
 
@@ -1886,7 +1886,7 @@ class TestSendDiscordForumMedia:
         session.post = MagicMock(return_value=thread_resp)
 
         post_calls = []
-        orig_post = session.post
+        session.post
 
         def track_post(url, **kwargs):
             post_calls.append({"url": url, "kwargs": kwargs})

@@ -29,8 +29,10 @@ def _install_fake_ddgs(monkeypatch, *, text_results=None, text_raises=None):
     class _FakeDDGS:
         def __enter__(self):
             return self
+
         def __exit__(self, *_a):
             return False
+
         def text(self, query, max_results=5):
             if text_raises is not None:
                 raise text_raises

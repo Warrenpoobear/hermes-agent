@@ -80,8 +80,10 @@ class TestCrossLoopCacheIsolation:
 
         t1 = threading.Thread(target=_get_client_on_new_loop, args=("a",))
         t2 = threading.Thread(target=_get_client_on_new_loop, args=("b",))
-        t1.start(); t1.join()
-        t2.start(); t2.join()
+        t1.start()
+        t1.join()
+        t2.start()
+        t2.join()
 
         client_id_a, loop_id_a = results["a"]
         client_id_b, loop_id_b = results["b"]
@@ -110,8 +112,10 @@ class TestCrossLoopCacheIsolation:
 
         t1 = threading.Thread(target=_get_sync_client, args=("a",))
         t2 = threading.Thread(target=_get_sync_client, args=("b",))
-        t1.start(); t1.join()
-        t2.start(); t2.join()
+        t1.start()
+        t1.join()
+        t2.start()
+        t2.join()
 
         assert results["a"] == results["b"], (
             "Sync clients should be shared across threads (no loop binding)"
@@ -134,6 +138,7 @@ class TestCrossLoopCacheIsolation:
 
         # Simulate: _run_async spawns a thread with asyncio.run()
         worker_client_id = [None]
+
         def _worker():
             async def _inner():
                 with patch("agent.auxiliary_client.resolve_provider_client",

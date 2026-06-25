@@ -12,6 +12,7 @@ Usage:
 import sys
 import json
 
+
 def extract_text(path, pages=None):
     import pymupdf
     doc = pymupdf.open(path)
@@ -21,10 +22,12 @@ def extract_text(path, pages=None):
             print(f"\n--- Page {i+1}/{len(doc)} ---\n")
             print(doc[i].get_text())
 
+
 def extract_markdown(path, pages=None):
     import pymupdf4llm
     md = pymupdf4llm.to_markdown(path, pages=pages)
     print(md)
+
 
 def extract_tables(path):
     import pymupdf
@@ -35,6 +38,7 @@ def extract_tables(path):
             print(f"\n--- Page {i+1}, Table {j+1} ---\n")
             df = table.to_pandas()
             print(df.to_markdown(index=False))
+
 
 def extract_images(path, output_dir):
     import pymupdf
@@ -53,6 +57,7 @@ def extract_images(path, output_dir):
             count += 1
     print(f"Extracted {count} images to {output_dir}/")
 
+
 def show_metadata(path):
     import pymupdf
     doc = pymupdf.open(path)
@@ -65,6 +70,7 @@ def show_metadata(path):
         "producer": doc.metadata.get("producer", ""),
         "format": doc.metadata.get("format", ""),
     }, indent=2))
+
 
 if __name__ == "__main__":
     args = sys.argv[1:]

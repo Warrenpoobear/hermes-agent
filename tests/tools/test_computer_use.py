@@ -240,6 +240,7 @@ class TestDispatch:
         out = handle_computer_use({"action": "set_value"})
         parsed = json.loads(out)
         assert "error" in parsed
+
     def test_capture_after_skipped_when_action_failed(self, noop_backend):
         """capture_after must not fire when res.ok=False (regression guard).
 
@@ -268,7 +269,7 @@ class TestDispatch:
     def test_capture_after_fires_when_action_succeeds(self, noop_backend):
         """capture_after must trigger for successful actions."""
         from tools.computer_use.tool import handle_computer_use
-        out = handle_computer_use({"action": "click", "element": 1,
+        out = handle_computer_use({"action": "click", "element": 1,  # noqa: F841
                                    "capture_after": True})
         # Noop backend returns ok=True, so capture should have been called.
         capture_calls = [c for c in noop_backend.calls if c[0] == "capture"]
@@ -343,6 +344,7 @@ class TestCaptureResponse:
             def start(self): pass
             def stop(self): pass
             def is_available(self): return True
+
             def capture(self, mode="som", app=None):
                 return CaptureResult(
                     mode=mode, width=1024, height=768,
@@ -379,6 +381,7 @@ class TestCaptureResponse:
             def start(self): pass
             def stop(self): pass
             def is_available(self): return True
+
             def capture(self, mode="som", app=None):
                 return CaptureResult(
                     mode=mode, width=800, height=600,
@@ -389,6 +392,7 @@ class TestCaptureResponse:
                     ],
                     app="Safari",
                 )
+
             def click(self, **kw): ...
             def drag(self, **kw): ...
             def scroll(self, **kw): ...
@@ -419,6 +423,7 @@ class TestCaptureResponse:
             def start(self): pass
             def stop(self): pass
             def is_available(self): return True
+
             def capture(self, mode="som", app=None):
                 return CaptureResult(
                     mode=mode, width=800, height=600,
@@ -426,6 +431,7 @@ class TestCaptureResponse:
                     elements=list(elements),
                     app="Obsidian",
                 )
+
             def click(self, **kw): ...
             def drag(self, **kw): ...
             def scroll(self, **kw): ...
@@ -567,12 +573,14 @@ class TestCaptureResponse:
             def start(self): pass
             def stop(self): pass
             def is_available(self): return True
+
             def capture(self, mode="som", app=None):
                 return CaptureResult(
                     mode=mode, width=800, height=600,
                     png_b64=fake_png, elements=list(elements),
                     app="Obsidian",
                 )
+
             def click(self, **kw): ...
             def drag(self, **kw): ...
             def scroll(self, **kw): ...
@@ -1188,6 +1196,7 @@ class TestCaptureAfterAppContext:
 #   matches nothing instead of silently picking the frontmost window.
 # ---------------------------------------------------------------------------
 
+
 def _make_cua_backend_with_windows(windows: List[Dict[str, Any]]):
     """Construct a CuaDriverBackend with a mocked MCP session that returns
     the supplied list_windows payload."""
@@ -1252,7 +1261,7 @@ class TestCaptureAppFilterNoMatch:
              "structuredContent": None},
         ]
 
-        cap = backend.capture(mode="ax", app="計算機")
+        cap = backend.capture(mode="ax", app="計算機")  # noqa: F841
 
         assert backend._active_pid == 200
         assert backend._active_window_id == 2
@@ -1272,7 +1281,7 @@ class TestCaptureAppFilterNoMatch:
              "structuredContent": None},
         ]
 
-        cap = backend.capture(mode="ax", app=None)
+        cap = backend.capture(mode="ax", app=None)  # noqa: F841
 
         assert backend._active_pid == 100
 

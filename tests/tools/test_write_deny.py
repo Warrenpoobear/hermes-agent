@@ -110,6 +110,7 @@ class TestWriteDenyPrefixes:
         import agent.file_safety as _fs
         _orig = _fs.build_write_denied_prefixes
         _extra_prefix = str(tmp_path / "etc" / "systemd") + os.sep
+
         def _patched(home):
             return _orig(home) + [_extra_prefix]
         with patch.object(_fs, "build_write_denied_prefixes", _patched):

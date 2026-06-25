@@ -385,6 +385,7 @@ class _MockResponse:
 
 class _MockHttpxError(Exception):
     """Simulates httpx.HTTPStatusError which exposes .response.status_code."""
+
     def __init__(self, status_code: int, message: str = "Bad Request"):
         super().__init__(message)
         self.response = _MockResponse(status_code)

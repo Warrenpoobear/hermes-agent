@@ -287,6 +287,7 @@ def test_fetch_cache_hits(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K", "value": "v"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -388,6 +389,7 @@ def test_fetch_cache_disabled(monkeypatch, tmp_path):
     fake_binary.write_text("")
     payload = _fake_bws_payload([])
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -551,6 +553,7 @@ def test_env_loader_calls_bsm_when_enabled(tmp_path, monkeypatch):
     monkeypatch.delenv("MY_BSM_KEY", raising=False)
 
     called = {"n": 0}
+
     def fake_apply(**kwargs):
         called["n"] += 1
         assert kwargs["enabled"] is True
@@ -587,6 +590,7 @@ def test_disk_cache_written_after_first_fetch(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K1", "value": "v1"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -623,6 +627,7 @@ def test_disk_cache_short_circuits_bws_when_fresh(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K1", "value": "v1"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -657,6 +662,7 @@ def test_disk_cache_expires_with_ttl(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K1", "value": "v1"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -694,6 +700,7 @@ def test_disk_cache_key_mismatch_triggers_refetch(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K1", "value": "v1"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")
@@ -728,6 +735,7 @@ def test_disk_cache_use_cache_false_skips_disk(monkeypatch, tmp_path):
     payload = _fake_bws_payload([{"key": "K1", "value": "v1"}])
 
     call_count = {"n": 0}
+
     def fake_run(*a, **kw):
         call_count["n"] += 1
         return mock.Mock(returncode=0, stdout=payload, stderr="")

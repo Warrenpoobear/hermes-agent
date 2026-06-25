@@ -299,7 +299,6 @@ class TestExecute:
         assert "print" in cmd
         assert "hi" in cmd
 
-
     def test_daytona_error_triggers_retry(self, make_env, daytona_sdk):
         sb = _make_sandbox()
         sb.state = "started"
@@ -326,15 +325,15 @@ class TestResourceConversion:
         return daytona_sdk.Resources.call_args.kwargs
 
     def test_memory_converted_to_gib(self, make_env, daytona_sdk):
-        env = make_env(memory=5120)
+        env = make_env(memory=5120)  # noqa: F841
         assert self._get_resources_kwargs(daytona_sdk)["memory"] == 5
 
     def test_disk_converted_to_gib(self, make_env, daytona_sdk):
-        env = make_env(disk=10240)
+        env = make_env(disk=10240)  # noqa: F841
         assert self._get_resources_kwargs(daytona_sdk)["disk"] == 10
 
     def test_small_values_clamped_to_1(self, make_env, daytona_sdk):
-        env = make_env(memory=100, disk=100)
+        env = make_env(memory=100, disk=100)  # noqa: F841
         kw = self._get_resources_kwargs(daytona_sdk)
         assert kw["memory"] == 1
         assert kw["disk"] == 1

@@ -225,7 +225,7 @@ class TestAllowlistOps:
         # Touch the script to bump its mtime then re-approve.
         import os
         import time
-        new_mtime = original_entry.get("script_mtime_at_approval")
+        original_entry.get("script_mtime_at_approval")
         time.sleep(0.01)
         os.utime(script, None)  # current time
 
@@ -309,4 +309,3 @@ class TestHooksAutoAcceptParsing:
         assert shell_hooks._resolve_effective_accept(
             {"hooks_auto_accept": "false"}, accept_hooks_arg=True,
         ) is True
-

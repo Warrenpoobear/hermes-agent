@@ -323,8 +323,8 @@ class TestIncomingDocumentHandling:
         content1 = b"First file content"
         content2 = b"Second file content"
 
-        call_count = 0
-        responses = [content1, content2]
+        call_count = 0  # noqa: F841
+        responses = [content1, content2]  # noqa: F841
 
         def make_session(_responses):
             idx = 0
@@ -528,4 +528,3 @@ class TestAllowAnyAttachment:
         """Garbage in max_attachment_bytes config falls back to 32 MiB."""
         adapter.config.extra["max_attachment_bytes"] = "not-a-number"
         assert adapter._discord_max_attachment_bytes() == 32 * 1024 * 1024
-

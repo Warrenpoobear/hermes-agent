@@ -33,6 +33,7 @@ from tools.file_tools import (
 
 class _FakeReadResult:
     """Minimal stand-in for FileOperations.read_file return value."""
+
     def __init__(self, content="line1\nline2\n", total_lines=2, file_size=100):
         self.content = content
         self._total_lines = total_lines
@@ -608,9 +609,11 @@ class TestLargeFileHint(unittest.TestCase):
         fake = _make_fake_ops(content=content, total_lines=10000, file_size=600_000)
         # Make to_dict return truncated=True
         orig_read = fake.read_file
+
         def patched_read(path, offset=1, limit=500):
             r = orig_read(path, offset, limit)
             orig_to_dict = r.to_dict
+
             def new_to_dict():
                 d = orig_to_dict()
                 d["truncated"] = True

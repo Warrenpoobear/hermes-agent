@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 # Public helpers
 # ---------------------------------------------------------------------------
 
+
 def managed_uv_path() -> Path:
     """Return the path where Hermes keeps *its* uv binary.
 
@@ -125,7 +126,7 @@ def rebuild_venv(uv_bin: str, venv_dir: Path, python_version: str = "3.11") -> b
     """
     backup: Optional[Path] = None
     if venv_dir.exists():
-        print(f"  → Rebuilding venv (old Python may lack FTS5)...")
+        print("  → Rebuilding venv (old Python may lack FTS5)...")
         backup = venv_dir.with_name(venv_dir.name + ".old")
         shutil.rmtree(backup, ignore_errors=True)  # clear any stale backup
         try:

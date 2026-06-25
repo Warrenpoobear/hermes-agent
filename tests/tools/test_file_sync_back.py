@@ -386,7 +386,7 @@ class TestSyncBackSIGINT:
         download_fn = _make_download_fn({})
         mgr = _make_manager(tmp_path, bulk_download_fn=download_fn)
 
-        handlers_seen = []
+        handlers_seen = []  # noqa: F841
         original_getsignal = signal.getsignal
 
         with patch("tools.environments.file_sync.signal.getsignal",
@@ -414,6 +414,7 @@ class TestSyncBackSIGINT:
         with patch("tools.environments.file_sync.signal.signal", side_effect=tracking_signal):
             # Run from a worker thread
             exc = []
+
             def run():
                 try:
                     mgr.sync_back(hermes_home=tmp_path / ".hermes")

@@ -158,6 +158,7 @@ OBSERVED_MEDIA_BACKFILL_LOOKBACK = 50
 # Max number of resource references to resolve per inbound turn
 OBSERVED_MEDIA_BACKFILL_MAX_RESOLVE_PER_TURN = 12
 
+
 class MarkdownProcessor:
     """Encapsulates all Markdown-related utilities for the Yuanbao platform.
 
@@ -638,6 +639,7 @@ class MarkdownProcessor:
             "Please use Markdown formatting when appropriate to improve readability."
         )
 
+
 class SignManager:
     """Encapsulates all sign-token related logic for the Yuanbao platform.
 
@@ -883,6 +885,7 @@ class SignManager:
 
 from dataclasses import dataclass, field as dc_field
 
+
 @dataclass
 class InboundContext:
     """Mutable context flowing through the inbound middleware pipeline.
@@ -1062,6 +1065,8 @@ class InboundPipeline:
             # End of chain — nothing more to do
 
         await next_fn()
+
+
 class DecodeMiddleware(InboundMiddleware):
     """Decode raw inbound frames from JSON or Protobuf into ctx.push.
 
@@ -1857,6 +1862,7 @@ class ExtractContentMiddleware(InboundMiddleware):
         ctx.media_refs = self._extract_inbound_media_refs(ctx.msg_body)
         ctx.link_urls = self._extract_link_urls(ctx.msg_body)
         await next_fn()
+
 
 class PlaceholderFilterMiddleware(InboundMiddleware):
     """Skip pure placeholder messages (e.g. '[image]' with no media)."""
@@ -2796,6 +2802,7 @@ class InboundPipelineBuilder:
             pipeline.use(mw_cls())
         return pipeline
 
+
 class ConnectionManager:
     """Manages the WebSocket connection lifecycle for YuanbaoAdapter.
 
@@ -3454,6 +3461,7 @@ class ConnectionManager:
             except Exception:
                 pass
 
+
 class MediaSendHandler(ABC):
     """Abstract base class for media send strategies.
 
@@ -3715,6 +3723,7 @@ class StickerHandler(MediaSendHandler):
         else:
             sticker = get_random_sticker()
             return build_sticker_msg_body(sticker)
+
 
 class GroupQueryService:
     """Encapsulates all group query operations (both low-level WS calls and

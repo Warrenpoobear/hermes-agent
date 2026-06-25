@@ -1450,7 +1450,7 @@ class TestConfigRoundTrip:
                 mismatches.append(f"{key}: expected bool, got {type(val).__name__}")
             elif expected == "list" and not isinstance(val, list):
                 mismatches.append(f"{key}: expected list, got {type(val).__name__}")
-        assert not mismatches, f"Type mismatches:\n" + "\n".join(mismatches)
+        assert not mismatches, "Type mismatches:\n" + "\n".join(mismatches)
 
 
 # ---------------------------------------------------------------------------
@@ -2502,7 +2502,7 @@ class TestProbeGatewayHealth:
         # Both paths should fail (no server), but we verify they were constructed
         # correctly by checking the URLs attempted.
         calls = []
-        original_urlopen = ws.urllib.request.urlopen
+        original_urlopen = ws.urllib.request.urlopen  # noqa: F841
 
         def mock_urlopen(req, **kwargs):
             calls.append(req.full_url)
@@ -3985,4 +3985,3 @@ class TestValidateProviderCredential:
     def test_empty_value_rejected(self):
         data = self._post("OPENAI_API_KEY", "   ").json()
         assert data["ok"] is False
-

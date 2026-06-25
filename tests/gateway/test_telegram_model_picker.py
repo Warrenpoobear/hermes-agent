@@ -93,7 +93,7 @@ class TestTelegramModelPicker:
 
         update = MagicMock()
         update.callback_query = query
-        context = MagicMock()
+        MagicMock()
 
         await adapter._handle_model_picker_callback(query, "mb", "12345")
 

@@ -184,8 +184,6 @@ class TestStreamingTTSActivation:
         use_streaming_tts = False
         try:
             from tools.tts_tool import (
-                _load_tts_config as _load_tts_cfg,
-                _get_provider as _get_prov,
                 _import_elevenlabs,
                 _import_sounddevice,
             )
@@ -513,8 +511,8 @@ class TestEdgeTTSLazyImport:
                     if isinstance(n, _ast.Name) and n.id == "edge_tts"
                 ]
                 assert bare_refs == [], (
-                    f"_generate_edge_tts uses bare 'edge_tts' name — "
-                    f"should use _import_edge_tts() lazy helper"
+                    "_generate_edge_tts uses bare 'edge_tts' name — "
+                    "should use _import_edge_tts() lazy helper"
                 )
 
                 # Must have a call to _import_edge_tts
@@ -700,11 +698,11 @@ class TestBrowserToolSignalHandlerRemoved:
                 continue
             assert "signal.signal(signal.SIGINT" not in stripped, (
                 f"browser_tool.py:{i} registers SIGINT handler — "
-                f"use atexit instead to avoid prompt_toolkit conflicts"
+                "use atexit instead to avoid prompt_toolkit conflicts"
             )
             assert "signal.signal(signal.SIGTERM" not in stripped, (
                 f"browser_tool.py:{i} registers SIGTERM handler — "
-                f"use atexit instead to avoid prompt_toolkit conflicts"
+                "use atexit instead to avoid prompt_toolkit conflicts"
             )
 
 
@@ -1299,7 +1297,8 @@ class TestRefreshLevelLock:
     """Bug: _refresh_level thread read _voice_recording without lock."""
 
     def test_refresh_stops_when_recording_false(self):
-        import threading, time
+        import threading
+        import time
 
         lock = threading.Lock()
         recording = True
