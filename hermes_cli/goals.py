@@ -1844,7 +1844,7 @@ def run_kanban_goal_loop(
             return {"outcome": "stopped", "turns_used": turns_used, "reason": f"status={status}"}
 
         # Still open — judge whether the latest response satisfies the card.
-        verdict, reason, _parse_failed = judge_goal(goal_text, last_response)
+        verdict, reason, _parse_failed, _wait = judge_goal(goal_text, last_response)
         _log(f"kanban goal loop: turn {turns_used}/{max_turns} verdict={verdict} reason={_truncate(reason, 120)}")
 
         if verdict == "done":

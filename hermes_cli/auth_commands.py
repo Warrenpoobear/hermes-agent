@@ -333,7 +333,6 @@ def auth_add_command(args) -> None:
             refresh_token=creds["tokens"].get("refresh_token"),
             base_url=creds.get("base_url"),
             last_refresh=creds.get("last_refresh"),
-            label=label,
         )
         first_credential = not pool.entries()
         pool.add_entry(entry)

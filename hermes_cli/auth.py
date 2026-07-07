@@ -965,6 +965,28 @@ def _load_global_auth_store() -> Dict[str, Any]:
         return {}
 
 
+def _active_provider_from_store(auth_store: Dict[str, Any]) -> Optional[str]:
+    """Return the active provider, falling back to the global-root store.
+
+    The profile store's own ``active_provider`` wins when present; otherwise
+    (profile mode with no selection of its own) inherit the global-root
+    ``active_provider``, mirroring the credential-pool / provider-state
+    fallbacks so a named profile running ``model.provider: auto`` can use a
+    globally authenticated provider. Classic mode has no global fallback, so
+    behavior is unchanged. See the #18594 follow-up.
+    """
+    if isinstance(auth_store, dict):
+        active = auth_store.get("active_provider")
+        if active:
+            return active
+    global_store = _load_global_auth_store()
+    if isinstance(global_store, dict):
+        active = global_store.get("active_provider")
+        if active:
+            return active
+    return None
+
+
 def _auth_lock_path() -> Path:
     return _auth_file_path().with_suffix(".lock")
 
@@ -1720,7 +1742,10 @@ def resolve_provider(
     _oauth_active: Optional[str] = None
     try:
         _store = _load_auth_store()
-        _maybe = _store.get("active_provider")
+        # Profile-aware: an empty profile inherits the global-root selection
+        # (#18594), while the demoted precedence (#29285) is unchanged — this
+        # is still the tier-6 last-resort candidate.
+        _maybe = _active_provider_from_store(_store)
         if _maybe and _maybe in PROVIDER_REGISTRY and get_auth_status(_maybe).get("logged_in"):
             _oauth_active = _maybe
     except Exception as e:

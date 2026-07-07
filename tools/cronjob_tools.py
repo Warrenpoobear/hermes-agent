@@ -23,6 +23,7 @@ from cron.jobs import (
     AmbiguousJobReference,
     claim_job_for_fire,
     create_job,
+    get_job,
     list_jobs,
     mark_job_run,
     parse_schedule,
