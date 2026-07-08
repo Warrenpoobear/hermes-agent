@@ -5467,6 +5467,16 @@ def _desktop_linux_needs_no_sandbox() -> bool:
         return False
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         return False
+    # WSL2: Electron's SUID sandbox helper needs a root-owned 4755 chrome-sandbox,
+    # which the common `hermes desktop` flow can't configure without an interactive
+    # sudo. --no-sandbox is the accepted mode on WSL (it's how the app already runs
+    # there), so fall back rather than hard-failing. Non-root only (guarded above).
+    try:
+        with open("/proc/version", encoding="utf-8") as f:
+            if "microsoft" in f.read().lower():
+                return True
+    except OSError:
+        pass
     try:
         with open("/proc/sys/kernel/apparmor_restrict_unprivileged_userns", encoding="utf-8") as f:
             return f.read().strip() == "1"
