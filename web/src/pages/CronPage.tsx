@@ -873,11 +873,11 @@ export default function CronPage() {
                 <Button
                   className="uppercase"
                   size="sm"
-                  onClick={handleEdit}
-                  disabled={saving}
-                  prefix={saving ? <Spinner /> : undefined}
+                  onClick={handleCreate}
+                  disabled={creating}
+                  prefix={creating ? <Spinner /> : undefined}
                 >
-                  {saving ? t.common.loading : "Save changes"}
+                  {creating ? t.common.loading : t.common.create}
                 </Button>
               </div>
             </div>

@@ -831,17 +831,6 @@ export default function SessionsPage() {
       .catch(() => {});
   }, []);
 
-  const loadStats = useCallback(() => {
-    api
-      .getSessionStats()
-      .then(setStats)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
-
   useEffect(() => {
     loadStats();
   }, [loadStats]);
