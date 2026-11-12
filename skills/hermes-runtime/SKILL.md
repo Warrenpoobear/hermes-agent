@@ -1,6 +1,13 @@
 ---
 name: hermes-runtime
-description: 'Hermes/OpenClaw agent runtime architecture: session lifecycle, skill document loading, tool execution pipeline, exec allowlist, cron job management, Docker deployment, API gateway routing (Together AI/Anthropic), model routing, agent fleet configuration, monitoring stack, the Town-Hermes runtime bridge, and the loop architecture reference (turn-based/goal-based/time-based/proactive loops mapped to Hermes primitives). Use whenever the user asks about how Hermes sessions run, cron scheduling, agent authority levels, loop design, or runtime configuration.'
+description: Hermes runtime architecture reference (fork draft).
+version: 0.1.0
+author: Wake Robin (fork)
+license: MIT
+platforms: [linux]
+metadata:
+  hermes:
+    tags: [runtime, architecture, reference]
 ---
 
 # Hermes Runtime
@@ -9,6 +16,8 @@ description: 'Hermes/OpenClaw agent runtime architecture: session lifecycle, ski
 **Created:** 2026-05-18
 
 ## Purpose
+
+**Scope (former long description):** Hermes/OpenClaw agent runtime architecture: session lifecycle, skill document loading, tool execution pipeline, exec allowlist, cron job management, Docker deployment, API gateway routing (Together AI/Anthropic), model routing, agent fleet configuration, monitoring stack, the Town-Hermes runtime bridge, and the loop architecture reference (turn-based/goal-based/time-based/proactive loops mapped to Hermes primitives). Use whenever the user asks about how Hermes sessions run, cron scheduling, agent authority levels, loop design, or runtime configuration.
 
 Encode the Hermes/OpenClaw agent runtime mechanics -- how sessions start, how tools execute, how cron jobs fire, and how the infrastructure is configured. The screener-ops skill covers *what* the fleet does; the openclaw-agent-optimize skill covers *how to tune* it; this skill covers the runtime machinery itself.
 

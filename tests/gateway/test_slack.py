@@ -184,31 +184,6 @@ def _fake_create_task(coro):
     return loop.create_task(_pending_for_fake_task())
 
 
-async def _pending_for_fake_task():
-    # Stay pending so done-callbacks attached by the adapter (which would
-    # otherwise schedule a reconnect) don't fire during the test. The pytest
-    # event loop will cancel us at teardown, which the adapter's
-    # ``_on_socket_mode_task_done`` already treats as intentional shutdown.
-    await asyncio.Event().wait()
-
-
-def _fake_create_task(coro):
-    """Test helper: consume the real coroutine and return a real awaitable Task.
-
-    Returning an actual ``asyncio.Task`` (built via ``loop.create_task`` so the
-    ``asyncio.create_task`` patch doesn't recurse) keeps the substitute usable
-    by code that later cancels, awaits, or attaches ``add_done_callback`` —
-    so future tests that exercise ``disconnect()`` after patching
-    ``asyncio.create_task`` won't trip over a non-awaitable MagicMock.
-    """
-    assert asyncio.iscoroutine(coro), (
-        f"_fake_create_task expected a coroutine, got {type(coro).__name__}"
-    )
-    coro.close()
-    loop = asyncio.get_event_loop()
-    return loop.create_task(_pending_for_fake_task())
-
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

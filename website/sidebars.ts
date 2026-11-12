@@ -187,6 +187,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex',
                     'user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-computer-use',
                     'user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent',
+                    'user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-self-improving',
                   ],
                 },
                 {
@@ -223,6 +224,15 @@ const sidebars: SidebarsConfig = {
                   items: [
                     'user-guide/skills/bundled/email/email-email-inbox-triage',
                     'user-guide/skills/bundled/email/email-himalaya',
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'hermes-runtime',
+                  key: 'skills-bundled-hermes-runtime',
+                  collapsed: true,
+                  items: [
+                    'user-guide/skills/bundled/hermes-runtime/hermes-runtime-hermes-runtime',
                   ],
                 },
                 {

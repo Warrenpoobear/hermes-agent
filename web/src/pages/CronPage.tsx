@@ -1010,7 +1010,7 @@ export default function CronPage() {
                   disabled={creating}
                   prefix={creating ? <Spinner /> : undefined}
                 >
-                  {creating ? t.common.loading : t.common.create}
+                  {creating ? t.common.creating : t.common.create}
                 </Button>
               </div>
             </div>

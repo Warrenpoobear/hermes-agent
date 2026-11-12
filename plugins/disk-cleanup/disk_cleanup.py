@@ -159,33 +159,6 @@ def _is_protected_cron_path(p: Path) -> bool:
     return str(p.resolve()) in _protected_cron_paths(get_hermes_home())
 
 
-# Paths under $HERMES_HOME that must NEVER be deleted by quick(),
-# regardless of what the stored category says.  This is a defense-in-depth
-# guard against stale tracked.json entries from before #34840.
-_PROTECTED_CRON_PATHS: set[str] = set()
-
-
-def _is_protected_cron_path(p: Path) -> bool:
-    """Return True if *p* is a cron control-plane file/directory that must
-    never be deleted.
-
-    This only matches the directory itself and known control-plane files
-    (``jobs.json``, ``.tick.lock``) — it does NOT blanket-protect
-    everything under ``cron/`` because ``cron/output/`` is disposable.
-    """
-    # Lazily build the set once per process so HERMES_HOME is resolved
-    # exactly once.
-    if not _PROTECTED_CRON_PATHS:
-        hermes_home = get_hermes_home()
-        for parent in ("cron", "cronjobs"):
-            base = hermes_home / parent
-            _PROTECTED_CRON_PATHS.add(str(base))
-            _PROTECTED_CRON_PATHS.add(str(base / "jobs.json"))
-            _PROTECTED_CRON_PATHS.add(str(base / ".tick.lock"))
-    resolved = str(p.resolve())
-    return resolved in _PROTECTED_CRON_PATHS
-
-
 def fmt_size(n: float) -> str:
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if n < 1024:

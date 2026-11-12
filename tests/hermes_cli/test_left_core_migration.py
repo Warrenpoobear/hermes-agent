@@ -404,25 +404,22 @@ def test_old_spotify_commands_point_at_the_plugin(tmp_path, monkeypatch):
     assert lcm.moved_command_hint("hermes", "honcho") == ""
 
 
-def test_old_mcp_serve_spelling_names_the_plugin_command(tmp_path, monkeypatch, capsys):
-    """`hermes mcp serve` (what MCP client configs launch) exits 2 with the new spelling and the install
-    line on stderr, never on stdout (the MCP wire); once the plugin is installed only the spelling."""
-    import sys
+def test_fork_keeps_hermes_mcp_serve_in_core(tmp_path, monkeypatch, capsys):
+    """FORK OVERRIDE of upstream's test_old_mcp_serve_spelling_names_the_plugin_command.
 
+    Upstream moved serving to the mcp-serve plugin and makes `hermes mcp serve` exit 2 with a
+    migration hint. This fork deliberately keeps `hermes mcp serve` in core (mcp_serve.py +
+    hermes_skills_mcp tools) because Cursor's mcp.json launches it, so the old spelling must parse
+    and print nothing on stdout (the MCP wire)."""
     from hermes_cli import main as main_mod
+
     home = _home(tmp_path)
     monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setattr(sys, "argv", ["hermes", "mcp", "serve", "--tools"])
     parser, _ = main_mod._build_cli_parser()
-    with pytest.raises(SystemExit) as exc:
-        parser.parse_args(["mcp", "serve", "--tools"])
-    out, err = capsys.readouterr()
-    assert exc.value.code == 2 and out == ""
-    assert "`hermes mcp serve` is now `hermes mcp-serve`" in err
-    assert "plugins install mcp-serve" in err
-    (home / "plugins" / "mcp-serve").mkdir(parents=True)
-    hint = lcm.moved_command_hint("hermes mcp", "serve")
-    assert "is now `hermes mcp-serve`" in hint and "install" not in hint
+    args = parser.parse_args(["mcp", "serve", "--verbose"])
+    out, _err = capsys.readouterr()
+    assert out == ""
+    assert args.mcp_action == "serve" and args.verbose is True
 
 
 def test_mcp_serve_is_never_installed_automatically(tmp_path):
