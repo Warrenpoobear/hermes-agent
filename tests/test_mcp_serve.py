@@ -511,8 +511,14 @@ def mcp_server_e2e(populated_sessions_dir, mock_session_db, monkeypatch):
 
 def _run_tool(server, name, args=None):
     """Call an MCP tool through FastMCP's tool manager and return parsed JSON."""
+    import inspect
+
+    tm = server._tool_manager
+    kwargs = {}
+    if "context" in inspect.signature(tm.call_tool).parameters:  # mcp 2.x
+        kwargs["context"] = None
     result = asyncio.get_event_loop().run_until_complete(
-        server._tool_manager.call_tool(name, args or {})
+        tm.call_tool(name, args or {}, **kwargs)
     )
     return json.loads(result) if isinstance(result, str) else result
 

@@ -54,11 +54,17 @@ logger = logging.getLogger("hermes.mcp_serve")
 
 _MCP_SERVER_AVAILABLE = False
 try:
-    from mcp.server.fastmcp import FastMCP
+    # mcp 2.x renamed FastMCP -> MCPServer (same surface); keep the old name locally.
+    from mcp.server import MCPServer as FastMCP
 
     _MCP_SERVER_AVAILABLE = True
 except ImportError:
-    FastMCP = None  # type: ignore[assignment,misc]
+    try:
+        from mcp.server.fastmcp import FastMCP  # mcp 1.x
+
+        _MCP_SERVER_AVAILABLE = True
+    except ImportError:
+        FastMCP = None  # type: ignore[assignment,misc]
 
 
 # ---------------------------------------------------------------------------
